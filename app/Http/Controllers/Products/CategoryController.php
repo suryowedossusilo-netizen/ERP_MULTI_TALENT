@@ -1,0 +1,45 @@
+<?php
+namespace App\Http\Controllers\Products;
+
+use App\Http\Controllers\Controller;
+use App\Models\Category;
+use Illuminate\Http\Request;
+
+class CategoryController extends Controller
+{
+    public function index()
+    {
+        $items = Category::where('tenant_id', tenant()->id)->paginate(15);
+        return view('products.categories.index', compact('items'));
+    }
+
+    public function create() { return view('products.categories.create'); }
+
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'name' => 'required',
+        ]);
+        $data['tenant_id'] = tenant()->id;
+        Category::create($data);
+        return redirect()->route('products.index')->with('success', 'Kategori berhasil ditambahkan.');
+    }
+
+    public function show(Category $item) { return view('products.categories.show', compact('item')); }
+
+    public function edit(Category $item) { return view('products.categories.edit', compact('item')); }
+
+    public function update(Request $request, Category $item)
+    {
+        $item->update($request->validate([
+            'name' => 'required',
+        ]));
+        return redirect()->route('products.index')->with('success', 'Kategori berhasil diperbarui.');
+    }
+
+    public function destroy(Category $item)
+    {
+        $item->delete();
+        return back()->with('success', 'Kategori berhasil dihapus.');
+    }
+}
