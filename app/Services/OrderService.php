@@ -1,8 +1,12 @@
 <?php
 namespace App\Services;
 
+use App\Models\Customer;
 use App\Models\Order;
+use App\Models\Product;
+use App\Models\Warehouse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class OrderService
 {
@@ -15,14 +19,49 @@ class OrderService
     public function create(int $tenantId, array $data): Order
     {
         return DB::transaction(function () use ($tenantId, $data) {
-            $subtotal = 0;
-            foreach ($data['items'] as &$item) {
-                $item['subtotal'] = $item['quantity'] * $item['price'] - ($item['discount'] ?? 0);
-                $subtotal += $item['subtotal'];
+            if (!empty($data['customer_id'])) {
+                Customer::where('tenant_id', $tenantId)->findOrFail($data['customer_id']);
             }
-            $discount = $data['discount'] ?? 0;
-            $tax      = $data['tax'] ?? 0;
-            $total    = $subtotal - $discount + $tax;
+
+            $subtotal = 0.0;
+            $itemsToCreate = [];
+            foreach ($data['items'] as $item) {
+                $product = Product::where('tenant_id', $tenantId)
+                    ->where('is_active', true)
+                    ->findOrFail($item['product_id']);
+
+                $quantity = (float) $item['quantity'];
+                // Always use the selling price stored by the tenant, never a client-supplied price.
+                $price = round((float) $product->selling_price, 2);
+                $lineDiscount = round((float) ($item['discount'] ?? 0), 2);
+                $gross = round($quantity * $price, 2);
+                if ($lineDiscount < 0 || $lineDiscount > $gross) {
+                    throw ValidationException::withMessages([
+                        'items' => 'Diskon setiap barang tidak boleh melebihi nilai barang.',
+                    ]);
+                }
+                $lineSubtotal = round($gross - $lineDiscount, 2);
+                $subtotal += $lineSubtotal;
+                $itemsToCreate[] = [
+                    'product_id' => $product->id,
+                    'quantity' => $quantity,
+                    'price' => $price,
+                    'discount' => $lineDiscount,
+                    'subtotal' => $lineSubtotal,
+                ];
+            }
+
+            $discount = round((float) ($data['discount'] ?? 0), 2);
+            $tax = round((float) ($data['tax'] ?? 0), 2);
+            if ($discount < 0 || $discount > $subtotal) {
+                throw ValidationException::withMessages([
+                    'discount' => 'Diskon order tidak boleh melebihi subtotal.',
+                ]);
+            }
+            $total = round($subtotal - $discount + $tax, 2);
+            if ($total < 0) {
+                throw ValidationException::withMessages(['tax' => 'Total order tidak boleh negatif.']);
+            }
 
             $order = Order::create([
                 'tenant_id'    => $tenantId,
@@ -36,7 +75,7 @@ class OrderService
                 'total'        => $total,
                 'note'         => $data['note'] ?? null,
             ]);
-            $order->items()->createMany($data['items']);
+            $order->items()->createMany($itemsToCreate);
 
             $this->audit->log('order.created', $order);
             return $order;
@@ -46,13 +85,31 @@ class OrderService
     public function confirm(Order $order): void
     {
         DB::transaction(function () use ($order) {
-            foreach ($order->items as $item) {
-                // Kurangi stok dari gudang utama (pertama)
-                $warehouseId = \App\Models\Warehouse::where('tenant_id', $order->tenant_id)->value('id');
-                $this->inventory->deduct($order->tenant_id, $item->product_id, $warehouseId, $item->quantity, Order::class, $order->id);
+            $lockedOrder = Order::where('tenant_id', $order->tenant_id)
+                ->lockForUpdate()
+                ->findOrFail($order->id);
+
+            if ($lockedOrder->status !== 'draft') {
+                throw ValidationException::withMessages([
+                    'order' => 'Order hanya dapat dikonfirmasi satu kali dan harus berstatus draft.',
+                ]);
             }
-            $order->update(['status' => 'confirmed']);
-            $this->audit->log('order.confirmed', $order);
+
+            $items = $lockedOrder->items()->get();
+            $warehouseId = Warehouse::where('tenant_id', $lockedOrder->tenant_id)->value('id');
+            if (!$warehouseId && $items->isNotEmpty()) {
+                throw ValidationException::withMessages([
+                    'order' => 'Tenant belum memiliki gudang untuk pengurangan stok.',
+                ]);
+            }
+
+            foreach ($items as $item) {
+                $product = Product::where('tenant_id', $lockedOrder->tenant_id)->findOrFail($item->product_id);
+                $this->inventory->deduct($lockedOrder->tenant_id, $product->id, $warehouseId, $item->quantity, Order::class, $lockedOrder->id);
+            }
+
+            $lockedOrder->update(['status' => 'confirmed']);
+            $this->audit->log('order.confirmed', $lockedOrder);
         });
     }
 }
