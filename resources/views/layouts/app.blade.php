@@ -8,12 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    @php
-        $erpCssUrl = file_exists(public_path('css/erp.css')) ? config('app.url') . '/css/erp.css' : null;
-    @endphp
-    @if ($erpCssUrl)
-        <link rel="stylesheet" href="{{ $erpCssUrl }}">
-    @endif
+    <link rel="stylesheet" href="{{ asset('css/erp.css') }}">
 </head>
 <body>
 <div class="layout">
