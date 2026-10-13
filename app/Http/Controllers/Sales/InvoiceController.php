@@ -24,10 +24,18 @@ class InvoiceController extends Controller
     public function store(Request $request, NumberingService $numbering)
     {
         $data = $request->validate([
-            'order_id'  => 'required|exists:orders,id',
-            'due_date'  => 'nullable|date',
+            'order_id' => 'required|integer',
+            'due_date' => 'nullable|date',
         ]);
-        $order = Order::findOrFail($data['order_id']);
+
+        $order = Order::where('tenant_id', tenant()->id)->findOrFail($data['order_id']);
+        if ($order->status === 'draft' || $order->status === 'cancelled') {
+            return back()->withErrors(['order_id' => 'Invoice hanya dapat dibuat untuk order yang sudah dikonfirmasi.'])->withInput();
+        }
+        if ($order->invoices()->exists()) {
+            return back()->withErrors(['order_id' => 'Order ini sudah memiliki invoice.'])->withInput();
+        }
+
         $invoice = Invoice::create([
             'tenant_id'      => tenant()->id,
             'invoice_number' => $numbering->next(tenant()->id, 'invoice', 'INV'),
@@ -44,6 +52,7 @@ class InvoiceController extends Controller
 
     public function show(Invoice $invoice)
     {
+        $invoice = Invoice::where('tenant_id', tenant()->id)->whereKey($invoice->id)->firstOrFail();
         $invoice->load('order.items', 'payments');
         return view('sales.invoices.show', compact('invoice'));
     }

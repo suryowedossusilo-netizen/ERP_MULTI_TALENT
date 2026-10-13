@@ -25,7 +25,7 @@ class PaymentController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'invoice_id'   => 'required|exists:invoices,id',
+            'invoice_id'   => 'required|integer',
             'amount'       => 'required|numeric|min:1',
             'method'       => 'required|string',
             'payment_date' => 'required|date',
