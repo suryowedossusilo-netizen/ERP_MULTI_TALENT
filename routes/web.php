@@ -14,9 +14,9 @@ Route::middleware(['tenant', 'tenant.status', 'auth'])->group(function () {
     Route::resource('roles', \App\Http\Controllers\Users\RoleController::class);
 
     // Employees
-    Route::resource('employees', \App\Http\Controllers\Employees\EmployeeController::class);
-    Route::resource('departments', \App\Http\Controllers\Employees\DepartmentController::class);
-    Route::resource('positions', \App\Http\Controllers\Employees\PositionController::class);
+    Route::resource('employees', \App\Http\Controllers\Employees\EmployeeController::class)->parameters(['employees' => 'item']);
+    Route::resource('departments', \App\Http\Controllers\Employees\DepartmentController::class)->parameters(['departments' => 'item']);
+    Route::resource('positions', \App\Http\Controllers\Employees\PositionController::class)->parameters(['positions' => 'item']);
 
     // CRM
     Route::resource('customers', \App\Http\Controllers\Customers\CustomerController::class);
