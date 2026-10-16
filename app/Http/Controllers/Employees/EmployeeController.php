@@ -1,12 +1,12 @@
 <?php
-namespace App\\Http\\Controllers\\Employees;
+namespace App\Http\Controllers\Employees;
 
-use App\\Http\\Controllers\\Controller;
-use App\\Models\\Employee;
-use App\\Models\\Department;
-use App\\Models\\Position;
-use Illuminate\\Http\\Request;
-use Illuminate\\Validation\\Rule;
+use App\Http\Controllers\Controller;
+use App\Models\Employee;
+use App\Models\Department;
+use App\Models\Position;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class EmployeeController extends Controller
 {
