@@ -1,9 +1,9 @@
 <?php
-namespace App\\Http\\Controllers\\Employees;
+namespace App\Http\Controllers\Employees;
 
-use App\\Http\\Controllers\\Controller;
-use App\\Models\\Position;
-use Illuminate\\Http\\Request;
+use App\Http\Controllers\Controller;
+use App\Models\Position;
+use Illuminate\Http\Request;
 
 class PositionController extends Controller
 {
