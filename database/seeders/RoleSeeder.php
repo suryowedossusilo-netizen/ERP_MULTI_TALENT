@@ -9,10 +9,17 @@ class RoleSeeder extends Seeder
 {
     public function run(): void
     {
-        $admin = Role::firstOrCreate(['name' => 'admin', 'tenant_id' => null]);
-        $admin->permissions()->sync(Permission::pluck('id'));
-
-        $staff = Role::firstOrCreate(['name' => 'staff', 'tenant_id' => null]);
-        $staff->permissions()->sync(Permission::whereNotIn('name', ['manage-tenants', 'manage-users', 'manage-roles'])->pluck('id'));
+        // Company administrator roles are created per tenant by registration/AdminSeeder.
+        // Never attach manage-tenants to a shared role that could be assigned to a tenant user.
+        $staff = Role::firstOrCreate(
+            ['name' => 'staff', 'tenant_id' => null],
+            ['guard_name' => 'web']
+        );
+        $staff->permissions()->sync(
+            Permission::whereNotIn('name', [
+                'manage-tenants', 'manage-users', 'manage-roles',
+                'manage-salaries', 'manage-payroll',
+            ])->pluck('id')
+        );
     }
 }
