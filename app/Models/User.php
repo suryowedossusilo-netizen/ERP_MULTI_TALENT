@@ -18,17 +18,30 @@ class User extends Authenticatable
         return ['password' => 'hashed', 'is_active' => 'boolean'];
     }
 
-    public function tenant()     { return $this->belongsTo(Tenant::class); }
-    public function roles()      { return $this->belongsToMany(Role::class, 'user_role'); }
-    public function employee()   { return $this->hasOne(Employee::class); }
+    public function tenant()   { return $this->belongsTo(Tenant::class); }
+
+    public function roles()
+    {
+        return $this->belongsToMany(Role::class, 'user_role')
+            ->where('roles.tenant_id', $this->tenant_id);
+    }
+
+    public function employee() { return $this->hasOne(Employee::class); }
 
     public function hasPermission(string $permission): bool
     {
-        return $this->roles()->whereHas('permissions', fn ($q) => $q->where('name', $permission))->exists();
+        return $this->roles()
+            ->whereHas('permissions', function ($query) use ($permission) {
+                $query->where('permissions.name', $permission)
+                    ->where(function ($scope) {
+                        $scope->whereNull('permissions.tenant_id')
+                            ->orWhere('permissions.tenant_id', $this->tenant_id);
+                    });
+            })->exists();
     }
 
     public function hasRole(string $role): bool
     {
-        return $this->roles()->where('name', $role)->exists();
+        return $this->roles()->where('roles.name', $role)->exists();
     }
 }
