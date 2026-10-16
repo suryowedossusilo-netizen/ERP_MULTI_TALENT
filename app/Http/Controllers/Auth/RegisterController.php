@@ -78,6 +78,6 @@ class RegisterController extends Controller
         $request->session()->regenerate();
         $request->session()->put('tenant_id', $user->tenant_id);
 
-        return redirect()->route('dashboard');
+        return redirect()->route('dashboard')->with('success', 'Pendaftaran berhasil. Simpan ID perusahaan Anda untuk login berikutnya: ' . $user->tenant->slug);
     }
 }
