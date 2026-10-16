@@ -1,71 +1,120 @@
 <?php
-namespace App\Http\Controllers\Employees;
+namespace App\\Http\\Controllers\\Employees;
 
-use App\Http\Controllers\Controller;
-use App\Models\Employee;
-use App\Models\Department;
-use App\Models\Position;
-use Illuminate\Http\Request;
+use App\\Http\\Controllers\\Controller;
+use App\\Models\\Employee;
+use App\\Models\\Department;
+use App\\Models\\Position;
+use Illuminate\\Http\\Request;
+use Illuminate\\Validation\\Rule;
 
 class EmployeeController extends Controller
 {
+    private function tenantId(): int
+    {
+        abort_unless(tenant(), 403, 'Tenant tidak ditemukan.');
+        return (int) tenant()->id;
+    }
+
+    private function ownedEmployee(Employee $item): Employee
+    {
+        abort_unless((int) $item->tenant_id === $this->tenantId(), 404);
+        return $item;
+    }
+
+    private function validateRelations(array $data): array
+    {
+        $tenantId = $this->tenantId();
+        foreach (['department_id' => Department::class, 'position_id' => Position::class] as $field => $model) {
+            if (!empty($data[$field])) {
+                $belongsToTenant = $model::where('tenant_id', $tenantId)->whereKey($data[$field])->exists();
+                abort_unless($belongsToTenant, 422, 'Departemen atau jabatan tidak valid untuk perusahaan ini.');
+            }
+        }
+        return $data;
+    }
+
+    private function canManageSalary(): bool
+    {
+        return auth()->user()->hasPermission('manage-salaries')
+            || auth()->user()->hasPermission('manage-payroll');
+    }
+
     public function index()
     {
-        $items = Employee::where('tenant_id', tenant()->id)->with(['department', 'position'])->paginate(15);
+        $items = Employee::where('tenant_id', $this->tenantId())->with(['department', 'position'])->paginate(15);
         return view('employees.index', compact('items'));
     }
 
     public function create()
     {
-        $departments = Department::where('tenant_id', tenant()->id)->get();
-        $positions   = Position::where('tenant_id', tenant()->id)->get();
+        $departments = Department::where('tenant_id', $this->tenantId())->get();
+        $positions = Position::where('tenant_id', $this->tenantId())->get();
         return view('employees.create', compact('departments', 'positions'));
     }
 
     public function store(Request $request)
     {
+        $tenantId = $this->tenantId();
         $data = $request->validate([
-            'employee_code' => 'required|string|unique:employees,employee_code',
-            'name'          => 'required|string|max:255',
-            'department_id' => 'nullable|exists:departments,id',
-            'position_id'   => 'nullable|exists:positions,id',
-            'phone'         => 'nullable|string',
-            'email'         => 'nullable|email',
-            'join_date'     => 'nullable|date',
-            'salary'        => 'nullable|numeric|min:0',
+            'employee_code' => ['required', 'string', 'max:100', Rule::unique('employees', 'employee_code')->where(fn ($q) => $q->where('tenant_id', $tenantId))],
+            'name' => 'required|string|max:255',
+            'department_id' => 'nullable|integer',
+            'position_id' => 'nullable|integer',
+            'phone' => 'nullable|string|max:50',
+            'email' => 'nullable|email|max:255',
+            'join_date' => 'nullable|date',
+            'salary' => 'nullable|numeric|min:0',
         ]);
-        $data['tenant_id'] = tenant()->id;
+        $data = $this->validateRelations($data);
+        if (!$this->canManageSalary()) {
+            unset($data['salary']);
+        }
+        $data['tenant_id'] = $tenantId;
         Employee::create($data);
         return redirect()->route('employees.index')->with('success', 'Karyawan ditambahkan.');
     }
 
-    public function show(Employee $item) { return view('employees.show', compact('item')); }
+    public function show(Employee $item)
+    {
+        $item = $this->ownedEmployee($item);
+        return view('employees.show', compact('item'));
+    }
+
     public function edit(Employee $item)
     {
-        $departments = Department::where('tenant_id', tenant()->id)->get();
-        $positions   = Position::where('tenant_id', tenant()->id)->get();
+        $item = $this->ownedEmployee($item);
+        $departments = Department::where('tenant_id', $this->tenantId())->get();
+        $positions = Position::where('tenant_id', $this->tenantId())->get();
         return view('employees.edit', compact('item', 'departments', 'positions'));
     }
 
     public function update(Request $request, Employee $item)
     {
-        $item->update($request->validate([
-            'employee_code' => 'required|string|unique:employees,employee_code,' . $item->id,
-            'name'          => 'required|string|max:255',
-            'department_id' => 'nullable|exists:departments,id',
-            'position_id'   => 'nullable|exists:positions,id',
-            'phone'         => 'nullable|string',
-            'email'         => 'nullable|email',
-            'join_date'     => 'nullable|date',
-            'salary'        => 'nullable|numeric|min:0',
-            'status'        => 'required|in:active,resigned,terminated',
-        ]));
+        $item = $this->ownedEmployee($item);
+        $tenantId = $this->tenantId();
+        $data = $request->validate([
+            'employee_code' => ['required', 'string', 'max:100', Rule::unique('employees', 'employee_code')->where(fn ($q) => $q->where('tenant_id', $tenantId))->ignore($item->id)],
+            'name' => 'required|string|max:255',
+            'department_id' => 'nullable|integer',
+            'position_id' => 'nullable|integer',
+            'phone' => 'nullable|string|max:50',
+            'email' => 'nullable|email|max:255',
+            'join_date' => 'nullable|date',
+            'salary' => 'nullable|numeric|min:0',
+            'status' => 'required|in:active,resigned,terminated',
+        ]);
+        $data = $this->validateRelations($data);
+        if (!$this->canManageSalary()) {
+            unset($data['salary']);
+        }
+        $item->update($data);
         return redirect()->route('employees.index')->with('success', 'Karyawan diperbarui.');
     }
 
     public function destroy(Employee $item)
     {
-        $item->delete();
+        $this->ownedEmployee($item)->delete();
         return back()->with('success', 'Karyawan dihapus.');
     }
 }
