@@ -7,6 +7,7 @@ use App\Models\Warehouse;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class StockController extends Controller
 {
@@ -31,8 +32,8 @@ class StockController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'product_id'   => 'required|exists:products,id',
-            'warehouse_id' => 'required|exists:warehouses,id',
+            'product_id'   => ['required', 'integer', Rule::exists('products', 'id')->where('tenant_id', tenant()->id)],
+            'warehouse_id' => ['required', 'integer', Rule::exists('warehouses', 'id')->where('tenant_id', tenant()->id)],
             'type'         => 'required|in:in,out',
             'quantity'     => 'required|numeric|min:0.001',
             'note'         => 'nullable|string',
