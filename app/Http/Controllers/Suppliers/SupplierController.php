@@ -7,6 +7,12 @@ use Illuminate\Http\Request;
 
 class SupplierController extends Controller
 {
+    private function owned(Supplier $item): Supplier
+    {
+        abort_unless(tenant() && (int) $item->tenant_id === (int) tenant()->id, 404);
+        return $item;
+    }
+
     public function index()
     {
         $items = Supplier::where('tenant_id', tenant()->id)->paginate(15);
@@ -27,12 +33,13 @@ class SupplierController extends Controller
         return redirect()->route('suppliers.index')->with('success', 'Pemasok berhasil ditambahkan.');
     }
 
-    public function show(Supplier $item) { return view('suppliers.show', compact('item')); }
+    public function show(Supplier $item) { $item = $this->owned($item); return view('suppliers.show', compact('item')); }
 
-    public function edit(Supplier $item) { return view('suppliers.edit', compact('item')); }
+    public function edit(Supplier $item) { $item = $this->owned($item); return view('suppliers.edit', compact('item')); }
 
     public function update(Request $request, Supplier $item)
     {
+        $item = $this->owned($item);
         $item->update($request->validate([
             'code' => 'required',
             'name' => 'required',
@@ -43,6 +50,7 @@ class SupplierController extends Controller
 
     public function destroy(Supplier $item)
     {
+        $item = $this->owned($item);
         $item->delete();
         return back()->with('success', 'Pemasok berhasil dihapus.');
     }
