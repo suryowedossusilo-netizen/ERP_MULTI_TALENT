@@ -9,9 +9,17 @@ require __DIR__ . '/auth.php';
 Route::middleware(['tenant', 'tenant.status', 'auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Users & Roles
-    Route::resource('users', \App\Http\Controllers\Users\UserController::class);
-    Route::resource('roles', \App\Http\Controllers\Users\RoleController::class);
+    // Users & Roles: enforce server-side permissions on every resource action.
+    // Match the resource parameter to the controller's implicit model-binding argument.
+    Route::middleware('permission:manage-users')->group(function () {
+        Route::resource('users', \App\Http\Controllers\Users\UserController::class)
+            ->parameters(['users' => 'item']);
+    });
+
+    Route::middleware('permission:manage-roles')->group(function () {
+        Route::resource('roles', \App\Http\Controllers\Users\RoleController::class)
+            ->parameters(['roles' => 'item']);
+    });
 
     // Employees
     Route::resource('employees', \App\Http\Controllers\Employees\EmployeeController::class)->parameters(['employees' => 'item']);
