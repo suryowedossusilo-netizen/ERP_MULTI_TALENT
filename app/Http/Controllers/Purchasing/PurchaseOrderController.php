@@ -7,6 +7,12 @@ use Illuminate\Http\Request;
 
 class PurchaseOrderController extends Controller
 {
+    private function owned(PurchaseOrder $item): PurchaseOrder
+    {
+        abort_unless(tenant() && (int) $item->tenant_id === (int) tenant()->id, 404);
+        return $item;
+    }
+
     public function index()
     {
         $items = PurchaseOrder::where('tenant_id', tenant()->id)->paginate(15);
@@ -31,6 +37,7 @@ class PurchaseOrderController extends Controller
 
     public function update(Request $request, PurchaseOrder $item)
     {
+        $item = $this->owned($item);
         $item->update($request->validate([
             'po_number' => 'required',
         ]));
@@ -39,6 +46,7 @@ class PurchaseOrderController extends Controller
 
     public function destroy(PurchaseOrder $item)
     {
+        $item = $this->owned($item);
         $item->delete();
         return back()->with('success', 'PO berhasil dihapus.');
     }
