@@ -34,11 +34,13 @@ class IncomeController extends Controller
 
     public function show(Income $item)
     {
+        $item = $this->owned($item);
         return view('finance.incomes.show', compact('item'));
     }
 
     public function edit(Income $item)
     {
+        $item = $this->owned($item);
         return view('finance.incomes.create', compact('item'));
     }
 
