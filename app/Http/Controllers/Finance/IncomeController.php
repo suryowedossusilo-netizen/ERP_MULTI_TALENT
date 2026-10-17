@@ -7,6 +7,12 @@ use Illuminate\Http\Request;
 
 class IncomeController extends Controller
 {
+    private function owned(Income $item): Income
+    {
+        abort_unless(tenant() && (int) $item->tenant_id === (int) tenant()->id, 404);
+        return $item;
+    }
+
     public function index()
     {
         $items = Income::where('tenant_id', tenant()->id)->paginate(15);
@@ -38,6 +44,7 @@ class IncomeController extends Controller
 
     public function update(Request $request, Income $item)
     {
+        $item = $this->owned($item);
         $item->update($request->validate([
             'income_number' => 'required',
             'amount' => 'required',
@@ -47,6 +54,7 @@ class IncomeController extends Controller
 
     public function destroy(Income $item)
     {
+        $item = $this->owned($item);
         $item->delete();
         return back()->with('success', 'Pemasukan berhasil dihapus.');
     }
