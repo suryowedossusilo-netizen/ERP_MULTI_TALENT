@@ -3,6 +3,7 @@ namespace App\Http\Controllers\Purchasing;
 
 use App\Http\Controllers\Controller;
 use App\Models\PurchaseOrder;
+use App\Models\Warehouse;
 use App\Services\InventoryService;
 use Illuminate\Http\Request;
 
@@ -12,12 +13,19 @@ class PurchaseReceiptController extends Controller
 
     public function store(Request $request, PurchaseOrder $purchaseOrder)
     {
+        abort_unless(tenant() && (int) $purchaseOrder->tenant_id === (int) tenant()->id, 404);
+
         $data = $request->validate([
-            'warehouse_id' => 'required|exists:warehouses,id',
+            'warehouse_id' => 'required|integer',
             'items'        => 'required|array|min:1',
             'items.*.id'   => 'required|exists:purchase_order_items,id',
             'items.*.qty'  => 'required|numeric|min:0.001',
         ]);
+        abort_unless(
+            Warehouse::where('tenant_id', tenant()->id)->whereKey($data['warehouse_id'])->exists(),
+            404
+        );
+
         $this->inventoryService->receivePurchaseOrder($purchaseOrder, $data);
         return back()->with('success', 'Barang diterima & stok masuk.');
     }
