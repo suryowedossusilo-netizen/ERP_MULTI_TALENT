@@ -1,10 +1,10 @@
 <?php
-namespace App\\Http\\Controllers\\Users;
+namespace App\Http\Controllers\Users;
 
-use App\\Http\\Controllers\\Controller;
-use App\\Models\\User;
-use Illuminate\\Http\\Request;
-use Illuminate\\Validation\\Rule;
+use App\Http\Controllers\Controller;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
@@ -61,7 +61,7 @@ class UserController extends Controller
             unset($data['password']);
         }
 
-        // Never allow tenant_id or other ownership fields from the request.
+        // Never allow tenant_id or account status to be changed through this form.
         unset($data['tenant_id'], $data['is_active']);
         $item->update($data);
 
