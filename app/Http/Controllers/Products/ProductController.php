@@ -7,6 +7,12 @@ use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
+    private function owned(Product $item): Product
+    {
+        abort_unless(tenant() && (int) $item->tenant_id === (int) tenant()->id, 404);
+        return $item;
+    }
+
     public function index()
     {
         $items = Product::where('tenant_id', tenant()->id)->paginate(15);
@@ -27,12 +33,13 @@ class ProductController extends Controller
         return redirect()->route('products.index')->with('success', 'Produk berhasil ditambahkan.');
     }
 
-    public function show(Product $item) { return view('products.show', compact('item')); }
+    public function show(Product $item) { $item = $this->owned($item); return view('products.show', compact('item')); }
 
-    public function edit(Product $item) { return view('products.edit', compact('item')); }
+    public function edit(Product $item) { $item = $this->owned($item); return view('products.edit', compact('item')); }
 
     public function update(Request $request, Product $item)
     {
+        $item = $this->owned($item);
         $item->update($request->validate([
             'sku' => 'required',
             'name' => 'required',
@@ -43,6 +50,7 @@ class ProductController extends Controller
 
     public function destroy(Product $item)
     {
+        $item = $this->owned($item);
         $item->delete();
         return back()->with('success', 'Produk berhasil dihapus.');
     }
