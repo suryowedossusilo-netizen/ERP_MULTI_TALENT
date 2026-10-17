@@ -7,6 +7,12 @@ use Illuminate\Http\Request;
 
 class ExpenseController extends Controller
 {
+    private function owned(Expense $item): Expense
+    {
+        abort_unless(tenant() && (int) $item->tenant_id === (int) tenant()->id, 404);
+        return $item;
+    }
+
     public function index()
     {
         $view = 'finance.expenses.index';
@@ -43,6 +49,7 @@ class ExpenseController extends Controller
 
     public function show(Expense $item)
     {
+        $item = $this->owned($item);
         $view = 'finance.expenses.show';
 
         if (!view()->exists($view)) {
@@ -54,6 +61,7 @@ class ExpenseController extends Controller
 
     public function edit(Expense $item)
     {
+        $item = $this->owned($item);
         $view = 'finance.expenses.edit';
 
         if (!view()->exists($view)) {
@@ -65,6 +73,7 @@ class ExpenseController extends Controller
 
     public function update(Request $request, Expense $item)
     {
+        $item = $this->owned($item);
         $item->update($request->validate([
             'expense_number' => 'required',
             'amount' => 'required',
@@ -74,6 +83,7 @@ class ExpenseController extends Controller
 
     public function destroy(Expense $item)
     {
+        $item = $this->owned($item);
         $item->delete();
         return back()->with('success', 'Pengeluaran berhasil dihapus.');
     }
