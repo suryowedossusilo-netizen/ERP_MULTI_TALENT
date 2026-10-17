@@ -7,6 +7,12 @@ use Illuminate\Http\Request;
 
 class WarehouseController extends Controller
 {
+    private function owned(Warehouse $item): Warehouse
+    {
+        abort_unless(tenant() && (int) $item->tenant_id === (int) tenant()->id, 404);
+        return $item;
+    }
+
     public function index()
     {
         $items = Warehouse::where('tenant_id', tenant()->id)->paginate(15);
@@ -26,12 +32,13 @@ class WarehouseController extends Controller
         return redirect()->route('inventory.index')->with('success', 'Gudang berhasil ditambahkan.');
     }
 
-    public function show(Warehouse $item) { return view('inventory.warehouses.show', compact('item')); }
+    public function show(Warehouse $item) { $item = $this->owned($item); return view('inventory.warehouses.show', compact('item')); }
 
-    public function edit(Warehouse $item) { return view('inventory.warehouses.edit', compact('item')); }
+    public function edit(Warehouse $item) { $item = $this->owned($item); return view('inventory.warehouses.edit', compact('item')); }
 
     public function update(Request $request, Warehouse $item)
     {
+        $item = $this->owned($item);
         $item->update($request->validate([
             'code' => 'required',
             'name' => 'required',
@@ -41,6 +48,7 @@ class WarehouseController extends Controller
 
     public function destroy(Warehouse $item)
     {
+        $item = $this->owned($item);
         $item->delete();
         return back()->with('success', 'Gudang berhasil dihapus.');
     }
