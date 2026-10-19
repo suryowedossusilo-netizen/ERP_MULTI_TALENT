@@ -95,7 +95,7 @@ class TenantCrudAndTransactionIsolationTest extends TestCase
         ])->assertNotFound();
         $this->actingAs($userA)->delete('/users/' . $userB->id)->assertNotFound();
 
-        $this->actingAs($userA)->get('/roles/' . $roleB->id)->assertNotFound();
+        $this->assertFalse($userA->roles()->whereKey($roleB->id)->exists());\n\n        $this->actingAs($userA)->get('/roles/' . $roleB->id)->assertNotFound();
         $this->actingAs($userA)->get('/roles/' . $roleB->id . '/edit')->assertNotFound();
         $this->actingAs($userA)->put('/roles/' . $roleB->id, ['name' => 'Hijacked Role'])->assertNotFound();
         $this->actingAs($userA)->delete('/roles/' . $roleB->id)->assertNotFound();
@@ -223,4 +223,66 @@ class TenantCrudAndTransactionIsolationTest extends TestCase
         $this->assertDatabaseMissing('stocks', ['tenant_id' => $tenantA->id, 'product_id' => $productA->id, 'warehouse_id' => $warehouseB->id]);
         $this->assertDatabaseMissing('stock_movements', ['tenant_id' => $tenantA->id]);
     }
+
+    public function test_invoice_creation_rejects_another_tenants_order(): void
+    {
+        $tenantA = $this->tenant('Invoice Company A', 'invoice-company-a');
+        $tenantB = $this->tenant('Invoice Company B', 'invoice-company-b');
+        $userA = $this->userWithPermissions($tenantA, ['manage-sales']);
+        $orderB = Order::create([
+            'tenant_id' => $tenantB->id,
+            'order_number' => 'SO-INVOICE-FOREIGN-001',
+            'status' => 'confirmed',
+            'subtotal' => 75,
+            'discount' => 0,
+            'tax' => 0,
+            'total' => 75,
+        ]);
+
+        $this->actingAs($userA)->post('/sales/invoices', [
+            'order_id' => $orderB->id,
+            'due_date' => now()->addDays(14)->toDateString(),
+        ])->assertNotFound();
+
+        $this->assertDatabaseMissing('invoices', [
+            'tenant_id' => $tenantA->id,
+            'order_id' => $orderB->id,
+        ]);
+        $this->assertDatabaseHas('orders', [
+            'id' => $orderB->id,
+            'tenant_id' => $tenantB->id,
+            'status' => 'confirmed',
+        ]);
+    }
+
+    public function test_sales_order_creation_rejects_another_tenants_customer(): void
+    {
+        $tenantA = $this->tenant('Order Company A', 'order-company-a');
+        $tenantB = $this->tenant('Order Company B', 'order-company-b');
+        $userA = $this->userWithPermissions($tenantA, ['manage-sales']);
+        $customerB = Customer::create([
+            'tenant_id' => $tenantB->id,
+            'code' => 'PRIVATE-CUSTOMER-B-001',
+            'name' => 'Private Customer B',
+        ]);
+        $productA = Product::create([
+            'tenant_id' => $tenantA->id,
+            'sku' => 'ORDER-LOCAL-SKU-A',
+            'name' => 'Local Product A',
+            'purchase_price' => 1,
+            'selling_price' => 10,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($userA)->post('/sales/orders', [
+            'customer_id' => $customerB->id,
+            'items' => [['product_id' => $productA->id, 'quantity' => 1]],
+        ])->assertNotFound();
+
+        $this->assertDatabaseMissing('orders', [
+            'tenant_id' => $tenantA->id,
+            'customer_id' => $customerB->id,
+        ]);
+    }
+
 }
