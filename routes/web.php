@@ -63,10 +63,13 @@ Route::middleware(['tenant', 'tenant.status', 'auth'])->group(function () {
 
     // Sales
     Route::middleware('permission:manage-sales')->prefix('sales')->name('sales.')->group(function () {
-        Route::resource('orders', \App\Http\Controllers\Sales\OrderController::class);
+        Route::resource('orders', \App\Http\Controllers\Sales\OrderController::class)
+            ->only(['index', 'create', 'store', 'show', 'destroy']);
         Route::post('orders/{order}/confirm', [\App\Http\Controllers\Sales\OrderController::class, 'confirm'])->name('orders.confirm');
-        Route::resource('invoices', \App\Http\Controllers\Sales\InvoiceController::class);
-        Route::resource('payments', \App\Http\Controllers\Sales\PaymentController::class);
+        Route::resource('invoices', \App\Http\Controllers\Sales\InvoiceController::class)
+            ->only(['index', 'create', 'store', 'show']);
+        Route::resource('payments', \App\Http\Controllers\Sales\PaymentController::class)
+            ->only(['index', 'create', 'store']);
     });
 
     // Purchasing
@@ -104,6 +107,7 @@ Route::middleware(['tenant', 'tenant.status', 'auth'])->group(function () {
 
     // Super-admin only
     Route::middleware('permission:manage-tenants')->group(function () {
-        Route::resource('tenants', \App\Http\Controllers\Tenant\TenantController::class);
+        Route::resource('tenants', \App\Http\Controllers\Tenant\TenantController::class)
+            ->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
     });
 });
