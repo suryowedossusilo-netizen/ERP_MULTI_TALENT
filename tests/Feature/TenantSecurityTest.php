@@ -92,6 +92,83 @@ class TenantSecurityTest extends TestCase
         $this->assertDatabaseHas('roles', ['id' => $roleB->id, 'tenant_id' => $tenantB->id]);
     }
 
+    public function test_stock_adjustment_rejects_product_from_another_tenant(): void
+    {
+        $tenantA = $this->tenant('stock-a');
+        $tenantB = $this->tenant('stock-b');
+        $adminA = $this->user($tenantA, 'stock-admin@example.test');
+        $this->grant($adminA, 'manage-inventory');
+
+        $foreignProduct = Product::create([
+            'tenant_id' => $tenantB->id,
+            'sku' => 'FOREIGN-SKU-01',
+            'name' => 'Foreign Product',
+            'purchase_price' => 1,
+            'selling_price' => 2,
+            'min_stock' => 0,
+            'is_active' => true,
+        ]);
+        $warehouse = Warehouse::create([
+            'tenant_id' => $tenantA->id,
+            'code' => 'WAREHOUSE-A-01',
+            'name' => 'Tenant A Warehouse',
+        ]);
+
+        $this->actingAs($adminA)->post('/inventory/adjust', [
+            'product_id' => $foreignProduct->id,
+            'warehouse_id' => $warehouse->id,
+            'type' => 'in',
+            'quantity' => 1,
+        ])->assertSessionHasErrors('product_id');
+
+        $this->assertDatabaseMissing('stocks', [
+            'tenant_id' => $tenantA->id,
+            'product_id' => $foreignProduct->id,
+            'warehouse_id' => $warehouse->id,
+        ]);
+        $this->assertDatabaseMissing('stock_movements', [
+            'tenant_id' => $tenantA->id,
+            'product_id' => $foreignProduct->id,
+            'warehouse_id' => $warehouse->id,
+        ]);
+    }
+
+    public function test_stock_adjustment_rejects_warehouse_from_another_tenant(): void
+    {
+        $tenantA = $this->tenant('warehouse-a');
+        $tenantB = $this->tenant('warehouse-b');
+        $adminA = $this->user($tenantA, 'warehouse-admin@example.test');
+        $this->grant($adminA, 'manage-inventory');
+
+        $product = Product::create([
+            'tenant_id' => $tenantA->id,
+            'sku' => 'LOCAL-SKU-01',
+            'name' => 'Local Product',
+            'purchase_price' => 1,
+            'selling_price' => 2,
+            'min_stock' => 0,
+            'is_active' => true,
+        ]);
+        $foreignWarehouse = Warehouse::create([
+            'tenant_id' => $tenantB->id,
+            'code' => 'WAREHOUSE-B-01',
+            'name' => 'Tenant B Warehouse',
+        ]);
+
+        $this->actingAs($adminA)->post('/inventory/adjust', [
+            'product_id' => $product->id,
+            'warehouse_id' => $foreignWarehouse->id,
+            'type' => 'in',
+            'quantity' => 1,
+        ])->assertSessionHasErrors('warehouse_id');
+
+        $this->assertDatabaseMissing('stocks', [
+            'tenant_id' => $tenantA->id,
+            'product_id' => $product->id,
+            'warehouse_id' => $foreignWarehouse->id,
+        ]);
+    }
+
     public function test_permission_from_another_tenant_does_not_grant_access(): void
     {
         $tenantA = $this->tenant('permission-a');
