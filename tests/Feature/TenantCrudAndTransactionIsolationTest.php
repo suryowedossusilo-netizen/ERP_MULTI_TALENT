@@ -96,7 +96,9 @@ class TenantCrudAndTransactionIsolationTest extends TestCase
         ])->assertNotFound();
         $this->actingAs($userA)->delete('/users/' . $userB->id)->assertNotFound();
 
-        $this->assertFalse($userA->roles()->whereKey($roleB->id)->exists());\n\n        $this->actingAs($userA)->get('/roles/' . $roleB->id)->assertNotFound();
+        $this->assertFalse($userA->roles()->whereKey($roleB->id)->exists());
+
+        $this->actingAs($userA)->get('/roles/' . $roleB->id)->assertNotFound();
         $this->actingAs($userA)->get('/roles/' . $roleB->id . '/edit')->assertNotFound();
         $this->actingAs($userA)->put('/roles/' . $roleB->id, ['name' => 'Hijacked Role'])->assertNotFound();
         $this->actingAs($userA)->delete('/roles/' . $roleB->id)->assertNotFound();
