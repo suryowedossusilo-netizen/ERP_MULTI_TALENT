@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Customer;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\Invoice;
