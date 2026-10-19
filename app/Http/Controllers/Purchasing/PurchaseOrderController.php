@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Purchasing;
 use App\Http\Controllers\Controller;
 use App\Models\PurchaseOrder;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class PurchaseOrderController extends Controller
 {
@@ -27,9 +28,17 @@ class PurchaseOrderController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'po_number' => 'required|string|max:100',
+            'po_number' => ['required', 'string', 'max:100', Rule::unique('purchase_orders', 'po_number')],
+            'order_date' => 'required|date',
+            'tax' => 'nullable|numeric|min:0',
+            'note' => 'nullable|string|max:5000',
         ]);
+
         $data['tenant_id'] = tenant()->id;
+        $data['status'] = 'draft';
+        $data['subtotal'] = 0;
+        $data['tax'] = (float) ($data['tax'] ?? 0);
+        $data['total'] = $data['subtotal'] + $data['tax'];
         PurchaseOrder::create($data);
 
         return redirect()->route('purchasing.purchase-orders.index')->with('success', 'PO berhasil ditambahkan.');
@@ -50,9 +59,19 @@ class PurchaseOrderController extends Controller
     public function update(Request $request, PurchaseOrder $item)
     {
         $item = $this->owned($item);
-        $item->update($request->validate([
-            'po_number' => 'required|string|max:100',
-        ]));
+        $data = $request->validate([
+            'po_number' => [
+                'required', 'string', 'max:100',
+                Rule::unique('purchase_orders', 'po_number')->ignore($item->id),
+            ],
+            'order_date' => 'required|date',
+            'tax' => 'nullable|numeric|min:0',
+            'note' => 'nullable|string|max:5000',
+        ]);
+
+        $data['tax'] = (float) ($data['tax'] ?? 0);
+        $data['total'] = (float) $item->subtotal + $data['tax'];
+        $item->update($data);
 
         return redirect()->route('purchasing.purchase-orders.index')->with('success', 'PO berhasil diperbarui.');
     }
