@@ -1,0 +1,129 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\Permission;
+use App\Models\Role;
+use App\Models\Tenant;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class TenantSecurityTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private function tenant(string $slug, string $status = 'active'): Tenant
+    {
+        return Tenant::create(['name' => ucfirst($slug), 'slug' => $slug, 'status' => $status]);
+    }
+
+    private function user(Tenant $tenant, string $email): User
+    {
+        return User::create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Test User',
+            'email' => $email,
+            'password' => 'test-password-123',
+            'is_active' => true,
+        ]);
+    }
+
+    private function grant(User $user, string $permissionName): void
+    {
+        $permission = Permission::firstOrCreate(
+            ['name' => $permissionName, 'tenant_id' => null],
+            ['guard_name' => 'web']
+        );
+        $role = Role::create([
+            'tenant_id' => $user->tenant_id,
+            'name' => 'test-' . $permissionName,
+            'guard_name' => 'web',
+        ]);
+        $role->permissions()->attach($permission->id);
+        $user->roles()->attach($role->id);
+    }
+
+    public function test_tenant_admin_cannot_open_another_tenants_user_edit_page(): void
+    {
+        $tenantA = $this->tenant('company-a');
+        $tenantB = $this->tenant('company-b');
+        $adminA = $this->user($tenantA, 'admin-a@example.test');
+        $userB = $this->user($tenantB, 'user-b@example.test');
+        $this->grant($adminA, 'manage-users');
+
+        $this->actingAs($adminA)->get('/users/' . $userB->id . '/edit')->assertNotFound();
+        $this->assertDatabaseHas('users', ['id' => $userB->id, 'tenant_id' => $tenantB->id]);
+    }
+
+    public function test_tenant_admin_cannot_delete_another_tenants_user(): void
+    {
+        $tenantA = $this->tenant('delete-a');
+        $tenantB = $this->tenant('delete-b');
+        $adminA = $this->user($tenantA, 'delete-admin@example.test');
+        $userB = $this->user($tenantB, 'delete-target@example.test');
+        $this->grant($adminA, 'manage-users');
+
+        $this->actingAs($adminA)->delete('/users/' . $userB->id)->assertNotFound();
+        $this->assertDatabaseHas('users', ['id' => $userB->id]);
+    }
+
+    public function test_user_without_required_permission_is_forbidden_from_user_management(): void
+    {
+        $tenant = $this->tenant('no-permission');
+        $user = $this->user($tenant, 'no-permission@example.test');
+
+        $this->actingAs($user)->get('/users')->assertForbidden();
+    }
+
+    public function test_tenant_admin_cannot_open_another_tenants_role(): void
+    {
+        $tenantA = $this->tenant('role-a');
+        $tenantB = $this->tenant('role-b');
+        $adminA = $this->user($tenantA, 'role-admin@example.test');
+        $roleB = Role::create([
+            'tenant_id' => $tenantB->id,
+            'name' => 'private-role',
+            'guard_name' => 'web',
+        ]);
+        $this->grant($adminA, 'manage-roles');
+
+        $this->actingAs($adminA)->get('/roles/' . $roleB->id)->assertNotFound();
+        $this->assertDatabaseHas('roles', ['id' => $roleB->id, 'tenant_id' => $tenantB->id]);
+    }
+
+    public function test_login_rejects_a_suspended_tenant(): void
+    {
+        $this->tenant('suspended-company', 'suspended');
+        $tenant = Tenant::where('slug', 'suspended-company')->firstOrFail();
+        $this->user($tenant, 'suspended@example.test');
+
+        $this->post('/login', [
+            'company' => 'suspended-company',
+            'email' => 'suspended@example.test',
+            'password' => 'test-password-123',
+        ])->assertSessionHasErrors('email');
+
+        $this->assertGuest();
+    }
+
+    public function test_authenticated_user_is_logged_out_when_tenant_becomes_suspended(): void
+    {
+        $tenant = $this->tenant('active-company');
+        $user = $this->user($tenant, 'active@example.test');
+        $this->actingAs($user);
+        $tenant->update(['status' => 'suspended']);
+
+        $this->get('/dashboard')->assertRedirect('/login');
+        $this->assertGuest();
+    }
+
+    public function test_logout_clears_authenticated_session(): void
+    {
+        $tenant = $this->tenant('logout-company');
+        $user = $this->user($tenant, 'logout@example.test');
+
+        $this->actingAs($user)->post('/logout')->assertRedirect('/login');
+        $this->assertGuest();
+    }
+}
