@@ -229,7 +229,7 @@ class TenantSecurityTest extends TestCase
         $this->actingAs($user);
         $tenant->update(['status' => 'suspended']);
 
-        $this->get('/dashboard')->assertRedirect('/login');
+        $this->get('/dashboard')->assertRedirect(route('login'));
         $this->assertGuest();
     }
 
