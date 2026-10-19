@@ -80,7 +80,7 @@ class EmployeeTenantRelationTest extends TestCase
         $role->permissions()->attach($permission->id);
         $user->roles()->attach($role->id);
 
-        $employee = \\App\\Models\\Employee::create([
+        $employee = \App\Models\Employee::create([
             'tenant_id' => $tenant->id,
             'employee_code' => 'SALARY-EMP-001',
             'name' => 'Private Salary Employee',
