@@ -92,6 +92,42 @@ class TenantSecurityTest extends TestCase
         $this->assertDatabaseHas('roles', ['id' => $roleB->id, 'tenant_id' => $tenantB->id]);
     }
 
+    public function test_permission_from_another_tenant_does_not_grant_access(): void
+    {
+        $tenantA = $this->tenant('permission-a');
+        $tenantB = $this->tenant('permission-b');
+        $userA = $this->user($tenantA, 'permission-a@example.test');
+
+        $foreignPermission = Permission::create([
+            'tenant_id' => $tenantB->id,
+            'name' => 'manage-users',
+            'guard_name' => 'web',
+        ]);
+        $roleA = Role::create([
+            'tenant_id' => $tenantA->id,
+            'name' => 'foreign-permission-test',
+            'guard_name' => 'web',
+        ]);
+        $roleA->permissions()->attach($foreignPermission->id);
+        $userA->roles()->attach($roleA->id);
+
+        $this->actingAs($userA)->get('/users')->assertForbidden();
+    }
+
+    public function test_active_tenant_user_can_log_in_with_company_identity(): void
+    {
+        $tenant = $this->tenant('login-company');
+        $this->user($tenant, 'login@example.test');
+
+        $this->post('/login', [
+            'company' => 'login-company',
+            'email' => 'login@example.test',
+            'password' => 'test-password-123',
+        ])->assertRedirect(route('dashboard'));
+
+        $this->assertAuthenticated();
+    }
+
     public function test_login_rejects_a_suspended_tenant(): void
     {
         $this->tenant('suspended-company', 'suspended');
