@@ -19,35 +19,49 @@ class PurchaseOrderController extends Controller
         return view('purchasing.index', compact('items'));
     }
 
-    public function create() { return view('purchasing.create'); }
+    public function create()
+    {
+        return view('purchasing.create');
+    }
 
     public function store(Request $request)
     {
         $data = $request->validate([
-            'po_number' => 'required',
+            'po_number' => 'required|string|max:100',
         ]);
         $data['tenant_id'] = tenant()->id;
         PurchaseOrder::create($data);
-        return redirect()->route('purchasing.index')->with('success', 'PO berhasil ditambahkan.');
+
+        return redirect()->route('purchasing.purchase-orders.index')->with('success', 'PO berhasil ditambahkan.');
     }
 
-    public function show(PurchaseOrder $item) { return view('purchasing.show', compact('item')); }
+    public function show(PurchaseOrder $item)
+    {
+        $item = $this->owned($item);
+        return view('purchasing.show', compact('item'));
+    }
 
-    public function edit(PurchaseOrder $item) { return view('purchasing.edit', compact('item')); }
+    public function edit(PurchaseOrder $item)
+    {
+        $item = $this->owned($item);
+        return view('purchasing.edit', compact('item'));
+    }
 
     public function update(Request $request, PurchaseOrder $item)
     {
         $item = $this->owned($item);
         $item->update($request->validate([
-            'po_number' => 'required',
+            'po_number' => 'required|string|max:100',
         ]));
-        return redirect()->route('purchasing.index')->with('success', 'PO berhasil diperbarui.');
+
+        return redirect()->route('purchasing.purchase-orders.index')->with('success', 'PO berhasil diperbarui.');
     }
 
     public function destroy(PurchaseOrder $item)
     {
         $item = $this->owned($item);
         $item->delete();
-        return back()->with('success', 'PO berhasil dihapus.');
+
+        return redirect()->route('purchasing.purchase-orders.index')->with('success', 'PO berhasil dihapus.');
     }
 }
