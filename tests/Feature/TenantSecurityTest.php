@@ -70,6 +70,15 @@ class TenantSecurityTest extends TestCase
         $this->assertDatabaseHas('users', ['id' => $userB->id]);
     }
 
+    public function test_user_with_required_permission_can_access_user_management(): void
+    {
+        $tenant = $this->tenant('permission-granted');
+        $admin = $this->user($tenant, 'permission-granted@example.test');
+        $this->grant($admin, 'manage-users');
+
+        $this->actingAs($admin)->get('/users')->assertOk();
+    }
+
     public function test_user_without_required_permission_is_forbidden_from_user_management(): void
     {
         $tenant = $this->tenant('no-permission');
