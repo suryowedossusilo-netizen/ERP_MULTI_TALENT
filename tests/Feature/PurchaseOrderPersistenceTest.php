@@ -46,10 +46,11 @@ class PurchaseOrderPersistenceTest extends TestCase
             'note' => 'Test persistence',
         ])->assertRedirect(route('purchasing.purchase-orders.index'));
 
+        // SQLite returns DATE columns as midnight timestamps in database assertions.
         $this->assertDatabaseHas('purchase_orders', [
             'tenant_id' => $tenant->id,
             'po_number' => 'PO-PERSIST-001',
-            'order_date' => '2026-10-19',
+            'order_date' => '2026-10-19 00:00:00',
             'tax' => 12500,
             'total' => 12500,
             'note' => 'Test persistence',
