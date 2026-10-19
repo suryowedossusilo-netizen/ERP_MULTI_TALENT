@@ -44,7 +44,7 @@ class PurchaseOrderController extends Controller
     public function edit(PurchaseOrder $item)
     {
         $item = $this->owned($item);
-        return view('purchasing.edit', compact('item'));
+        return view('purchasing.create', compact('item'));
     }
 
     public function update(Request $request, PurchaseOrder $item)
