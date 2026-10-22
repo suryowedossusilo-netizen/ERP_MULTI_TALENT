@@ -997,7 +997,8 @@
                 "bamarni/composer-bin-plugin": "^1.8.2",
                 "phpunit/phpunit": "^8.5.52 || ^9.6.34",
                 "uri-template/tests": "1.0.0"
-            },            "type": "library",
+            },
+            "type": "library",
             "extra": {
                 "bamarni-bin": {
                     "bin-links": true,
@@ -1996,7 +1997,8 @@
                 "ruflin/elastica": "^7 || ^8",
                 "symfony/mailer": "^5.4 || ^6",
                 "symfony/mime": "^5.4 || ^6"
-            },            "suggest": {
+            },
+            "suggest": {
                 "aws/aws-sdk-php": "Allow sending log messages to AWS services like DynamoDB",
                 "doctrine/couchdb": "Allow sending log messages to a CouchDB server",
                 "elasticsearch/elasticsearch": "Allow sending log messages to an Elasticsearch server via official client",
@@ -2995,7 +2997,8 @@
                 "MIT"
             ],
             "authors": [
-                {                    "name": "Ben Ramsey",
+                {
+                    "name": "Ben Ramsey",
                     "email": "ben@benramsey.com",
                     "homepage": "https://benramsey.com"
                 }
@@ -3994,7 +3997,8 @@
                     "url": "https://symfony.com/sponsor",
                     "type": "custom"
                 },
-                {                    "url": "https://github.com/fabpot",
+                {
+                    "url": "https://github.com/fabpot",
                     "type": "github"
                 },
                 {
@@ -4993,7 +4997,8 @@
                 }
             ],
             "time": "2026-10-08T16:56:12+00:00"
-        },        {
+        },
+        {
             "name": "symfony/routing",
             "version": "v7.4.21",
             "source": {
@@ -5992,7 +5997,8 @@
                 "clone",
                 "copy",
                 "duplicate",
-                "object",                "object graph"
+                "object",
+                "object graph"
             ],
             "support": {
                 "issues": "https://github.com/myclabs/DeepCopy/issues",
@@ -6991,7 +6997,8 @@
             "description": "Diff implementation",
             "homepage": "https://github.com/sebastianbergmann/diff",
             "keywords": [
-                "diff",                "udiff",
+                "diff",
+                "udiff",
                 "unidiff",
                 "unified diff"
             ],
