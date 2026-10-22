@@ -10,3 +10,9 @@
 /database/*.sqlite
 /bootstrap/cache/*.php
 /storage/framework/*.php
+
+# PHPUnit generated cache
+/.phpunit.cache/
+
+# Compiled Blade views
+/storage/framework/views/
