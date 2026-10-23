@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   resolve-lock:
@@ -15,6 +15,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
 
       - name: Set up PHP 8.2
         uses: shivammathur/setup-php@v2
@@ -44,10 +47,14 @@ jobs:
           composer validate --no-check-publish
           composer install --dry-run --no-interaction --prefer-dist --no-progress
 
-      - name: Upload generated lock file for review
-        uses: actions/upload-artifact@v4
-        with:
-          name: composer-lock-php82
-          path: composer.lock
-          if-no-files-found: error
-          retention-days: 3
+      - name: Commit compatible lock file to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add composer.lock
+          if git diff --cached --quiet; then
+            echo "composer.lock is already up to date"
+          else
+            git commit -m "Fix Composer lock compatibility with PHP 8.2"
+            git push origin HEAD:main
+          fi
