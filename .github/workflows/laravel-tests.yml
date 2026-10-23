@@ -29,7 +29,7 @@ jobs:
         run: composer validate --no-check-publish
 
       - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist --no-progress
+        run: composer install --no-interaction --prefer-dist --no-progress --optimize-autoloader
 
       - name: Verify Laravel route registration
         env:
