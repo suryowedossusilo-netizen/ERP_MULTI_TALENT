@@ -1,0 +1,53 @@
+name: Resolve Composer Lock (PHP 8.2)
+
+on:
+  push:
+    paths:
+      - ".github/workflows/resolve-composer-lock.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  resolve-lock:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          tools: composer:v2
+          coverage: none
+
+      - name: Validate current Composer files
+        run: composer validate --no-check-publish
+
+      - name: Resolve PHP 8.2-compatible dependencies
+        run: >
+          composer update
+          symfony/clock
+          symfony/css-selector
+          symfony/event-dispatcher
+          symfony/string
+          symfony/translation
+          --with-all-dependencies
+          --no-interaction
+          --prefer-dist
+          --no-progress
+
+      - name: Validate resolved lock file
+        run: |
+          composer validate --no-check-publish
+          composer install --dry-run --no-interaction --prefer-dist --no-progress
+
+      - name: Upload generated lock file for review
+        uses: actions/upload-artifact@v4
+        with:
+          name: composer-lock-php82
+          path: composer.lock
+          if-no-files-found: error
+          retention-days: 3
