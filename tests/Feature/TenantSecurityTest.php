@@ -203,6 +203,76 @@ class TenantSecurityTest extends TestCase
         $this->actingAs($userA)->get('/users')->assertForbidden();
     }
 
+    public function test_employee_creation_can_provision_a_tenant_scoped_login_account(): void
+    {
+        $tenant = $this->tenant('employee-account-company');
+        $admin = $this->user($tenant, 'employee-admin@example.test');
+        $this->grant($admin, 'manage-employees');
+
+        $this->actingAs($admin)->post(route('employees.store'), [
+            'employee_code' => 'EMP-ACCOUNT-01',
+            'name' => 'Account Employee',
+            'email' => 'employee-account@example.test',
+            'account_password' => 'employee-password-123',
+        ])->assertRedirect(route('employees.index'));
+
+        $user = User::where('tenant_id', $tenant->id)
+            ->where('email', 'employee-account@example.test')
+            ->firstOrFail();
+
+        $this->assertDatabaseHas('employees', [
+            'tenant_id' => $tenant->id,
+            'user_id' => $user->id,
+            'employee_code' => 'EMP-ACCOUNT-01',
+            'name' => 'Account Employee',
+        ]);
+
+        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('employee-password-123', $user->password));
+    }
+
+    public function test_employee_creation_without_password_does_not_create_login_account(): void
+    {
+        $tenant = $this->tenant('employee-no-account-company');
+        $admin = $this->user($tenant, 'employee-no-account-admin@example.test');
+        $this->grant($admin, 'manage-employees');
+
+        $this->actingAs($admin)->post(route('employees.store'), [
+            'employee_code' => 'EMP-NO-ACCOUNT-01',
+            'name' => 'No Account Employee',
+            'email' => 'no-account@example.test',
+        ])->assertRedirect(route('employees.index'));
+
+        $this->assertDatabaseHas('employees', [
+            'tenant_id' => $tenant->id,
+            'employee_code' => 'EMP-NO-ACCOUNT-01',
+            'user_id' => null,
+        ]);
+        $this->assertDatabaseMissing('users', [
+            'tenant_id' => $tenant->id,
+            'email' => 'no-account@example.test',
+        ]);
+    }
+
+    public function test_employee_login_account_requires_a_unique_email(): void
+    {
+        $tenant = $this->tenant('employee-duplicate-email-company');
+        $admin = $this->user($tenant, 'employee-duplicate-admin@example.test');
+        $this->grant($admin, 'manage-employees');
+        $this->user($tenant, 'taken-email@example.test');
+
+        $this->actingAs($admin)->post(route('employees.store'), [
+            'employee_code' => 'EMP-DUPLICATE-EMAIL',
+            'name' => 'Duplicate Email Employee',
+            'email' => 'taken-email@example.test',
+            'account_password' => 'employee-password-123',
+        ])->assertSessionHasErrors('email');
+
+        $this->assertDatabaseMissing('employees', [
+            'tenant_id' => $tenant->id,
+            'employee_code' => 'EMP-DUPLICATE-EMAIL',
+        ]);
+    }
+
     public function test_active_tenant_employee_can_log_in_with_employee_identity(): void
     {
         $tenant = $this->tenant('login-company');
