@@ -1,17 +1,20 @@
 @extends('layouts.guest')
 @section('title', 'Masuk')
-@section('subtitle', 'Masukkan ID perusahaan, email, dan password untuk masuk.')
+@section('subtitle', 'Masukkan ID perusahaan dan identitas akun karyawan.')
 @section('content')
 <form method="POST" action="{{ route('login') }}" style="display:grid;gap:.9rem">
     @csrf
     <div>
         <label class="label">ID Perusahaan (slug)</label>
         <input name="company" class="input" placeholder="contoh: demo" value="{{ old('company') }}" required autofocus autocomplete="organization">
-        <small style="color:var(--muted)">Gunakan slug perusahaan yang diberikan saat pendaftaran.</small>
     </div>
     <div>
-        <label class="label">Email</label>
-        <input name="email" type="email" class="input" placeholder="nama@perusahaan.com" value="{{ old('email') }}" required autocomplete="username">
+        <label class="label">ID Karyawan</label>
+        <input name="employee_code" class="input" placeholder="ID karyawan" value="{{ old('employee_code') }}" required maxlength="100" autocomplete="username">
+    </div>
+    <div>
+        <label class="label">Nama Lengkap</label>
+        <input name="name" class="input" placeholder="Nama sesuai data perusahaan" value="{{ old('name') }}" required maxlength="255" autocomplete="name">
     </div>
     <div>
         <label class="label">Password</label>
