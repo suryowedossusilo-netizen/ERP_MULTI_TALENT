@@ -2,8 +2,8 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Employee;
 use App\Models\Tenant;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -19,7 +19,8 @@ class LoginController extends Controller
     {
         $data = $request->validate([
             'company' => 'required|string|max:255',
-            'email' => 'required|email',
+            'employee_code' => 'required|string|max:100',
+            'name' => 'required|string|max:255',
             'password' => 'required|string',
         ]);
 
@@ -30,17 +31,26 @@ class LoginController extends Controller
             })
             ->first();
 
-        $user = $tenant
-            ? User::where('tenant_id', $tenant->id)
-                ->where('email', $data['email'])
-                ->where('is_active', true)
+        $employee = $tenant
+            ? Employee::where('tenant_id', $tenant->id)
+                ->where('employee_code', trim($data['employee_code']))
+                ->where('name', trim($data['name']))
+                ->where('status', 'active')
+                ->with('user')
                 ->first()
             : null;
 
-        if (!$user || !Hash::check($data['password'], $user->password)) {
+        $user = $employee?->user;
+
+        if (
+            !$user ||
+            (int) $user->tenant_id !== (int) $tenant->id ||
+            !$user->is_active ||
+            !Hash::check($data['password'], $user->password)
+        ) {
             return back()
-                ->withErrors(['email' => 'Identitas perusahaan, email, atau password tidak sesuai.'])
-                ->onlyInput('company', 'email');
+                ->withErrors(['employee_code' => 'Identitas perusahaan atau data login karyawan tidak sesuai.'])
+                ->onlyInput('company', 'employee_code', 'name');
         }
 
         Auth::login($user, $request->boolean('remember'));
