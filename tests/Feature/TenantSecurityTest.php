@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Employee;
 use App\Models\Permission;
 use App\Models\Product;
 use App\Models\Role;
@@ -202,31 +203,69 @@ class TenantSecurityTest extends TestCase
         $this->actingAs($userA)->get('/users')->assertForbidden();
     }
 
-    public function test_active_tenant_user_can_log_in_with_company_identity(): void
+    public function test_active_tenant_employee_can_log_in_with_employee_identity(): void
     {
         $tenant = $this->tenant('login-company');
-        $this->user($tenant, 'login@example.test');
+        $user = $this->user($tenant, 'login@example.test');
+        Employee::create([
+            'tenant_id' => $tenant->id,
+            'user_id' => $user->id,
+            'employee_code' => 'EMP-LOGIN-01',
+            'name' => 'Login Employee',
+            'status' => 'active',
+        ]);
 
         $this->post('/login', [
             'company' => 'login-company',
-            'email' => 'login@example.test',
+            'employee_code' => 'EMP-LOGIN-01',
+            'name' => 'Login Employee',
             'password' => 'test-password-123',
         ])->assertRedirect(route('dashboard'));
 
-        $this->assertAuthenticated();
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_login_rejects_employee_identity_from_another_tenant(): void
+    {
+        $tenantA = $this->tenant('login-company-a');
+        $tenantB = $this->tenant('login-company-b');
+        $userB = $this->user($tenantB, 'login-b@example.test');
+        Employee::create([
+            'tenant_id' => $tenantB->id,
+            'user_id' => $userB->id,
+            'employee_code' => 'EMP-CROSS-TENANT',
+            'name' => 'Employee B',
+            'status' => 'active',
+        ]);
+
+        $this->post('/login', [
+            'company' => $tenantA->slug,
+            'employee_code' => 'EMP-CROSS-TENANT',
+            'name' => 'Employee B',
+            'password' => 'test-password-123',
+        ])->assertSessionHasErrors('employee_code');
+
+        $this->assertGuest();
     }
 
     public function test_login_rejects_a_suspended_tenant(): void
     {
-        $this->tenant('suspended-company', 'suspended');
-        $tenant = Tenant::where('slug', 'suspended-company')->firstOrFail();
-        $this->user($tenant, 'suspended@example.test');
+        $tenant = $this->tenant('suspended-company', 'suspended');
+        $user = $this->user($tenant, 'suspended@example.test');
+        Employee::create([
+            'tenant_id' => $tenant->id,
+            'user_id' => $user->id,
+            'employee_code' => 'EMP-SUSPENDED-01',
+            'name' => 'Suspended Employee',
+            'status' => 'active',
+        ]);
 
         $this->post('/login', [
             'company' => 'suspended-company',
-            'email' => 'suspended@example.test',
+            'employee_code' => 'EMP-SUSPENDED-01',
+            'name' => 'Suspended Employee',
             'password' => 'test-password-123',
-        ])->assertSessionHasErrors('email');
+        ])->assertSessionHasErrors('employee_code');
 
         $this->assertGuest();
     }
