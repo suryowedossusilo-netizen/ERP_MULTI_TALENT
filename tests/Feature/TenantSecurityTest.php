@@ -225,6 +225,73 @@ class TenantSecurityTest extends TestCase
         $this->assertAuthenticatedAs($user);
     }
 
+    public function test_employee_login_rejects_a_wrong_password(): void
+    {
+        $tenant = $this->tenant('wrong-password-company');
+        $user = $this->user($tenant, 'employee@example.test');
+        Employee::create([
+            'tenant_id' => $tenant->id,
+            'user_id' => $user->id,
+            'employee_code' => 'EMP-WRONG-PASSWORD',
+            'name' => 'Password Test Employee',
+            'status' => 'active',
+        ]);
+
+        $this->post('/login', [
+            'company' => $tenant->slug,
+            'employee_code' => 'EMP-WRONG-PASSWORD',
+            'name' => 'Password Test Employee',
+            'password' => 'incorrect-password',
+        ])->assertSessionHasErrors('employee_code');
+
+        $this->assertGuest();
+    }
+
+    public function test_employee_login_rejects_an_inactive_employee(): void
+    {
+        $tenant = $this->tenant('inactive-employee-company');
+        $user = $this->user($tenant, 'inactive-employee@example.test');
+        Employee::create([
+            'tenant_id' => $tenant->id,
+            'user_id' => $user->id,
+            'employee_code' => 'EMP-INACTIVE-01',
+            'name' => 'Inactive Employee',
+            'status' => 'resigned',
+        ]);
+
+        $this->post('/login', [
+            'company' => $tenant->slug,
+            'employee_code' => 'EMP-INACTIVE-01',
+            'name' => 'Inactive Employee',
+            'password' => 'test-password-123',
+        ])->assertSessionHasErrors('employee_code');
+
+        $this->assertGuest();
+    }
+
+    public function test_employee_login_rejects_an_inactive_user_account(): void
+    {
+        $tenant = $this->tenant('inactive-user-company');
+        $user = $this->user($tenant, 'inactive-user@example.test');
+        $user->update(['is_active' => false]);
+        Employee::create([
+            'tenant_id' => $tenant->id,
+            'user_id' => $user->id,
+            'employee_code' => 'EMP-INACTIVE-USER',
+            'name' => 'Inactive User Employee',
+            'status' => 'active',
+        ]);
+
+        $this->post('/login', [
+            'company' => $tenant->slug,
+            'employee_code' => 'EMP-INACTIVE-USER',
+            'name' => 'Inactive User Employee',
+            'password' => 'test-password-123',
+        ])->assertSessionHasErrors('employee_code');
+
+        $this->assertGuest();
+    }
+
     public function test_login_rejects_employee_identity_from_another_tenant(): void
     {
         $tenantA = $this->tenant('login-company-a');
