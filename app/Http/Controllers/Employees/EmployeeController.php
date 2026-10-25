@@ -5,6 +5,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Employee;
 use App\Models\Department;
 use App\Models\Position;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -62,17 +64,46 @@ class EmployeeController extends Controller
             'department_id' => 'nullable|integer',
             'position_id' => 'nullable|integer',
             'phone' => 'nullable|string|max:50',
-            'email' => 'nullable|email|max:255',
+            'email' => 'nullable|email|max:255|required_with:account_password',
+            'account_password' => 'nullable|string|min:8',
             'join_date' => 'nullable|date',
             'salary' => 'nullable|numeric|min:0',
         ]);
+        if (!empty($data['account_password'])) {
+            validator($data, [
+                'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
+            ])->validate();
+        }
         $data = $this->validateRelations($data);
         if (!$this->canManageSalary()) {
             unset($data['salary']);
         }
-        $data['tenant_id'] = $tenantId;
-        Employee::create($data);
-        return redirect()->route('employees.index')->with('success', 'Karyawan ditambahkan.');
+
+        DB::transaction(function () use ($data, $tenantId) {
+            $accountPassword = $data['account_password'] ?? null;
+            unset($data['account_password']);
+            $data['tenant_id'] = $tenantId;
+
+            if ($accountPassword !== null && $accountPassword !== '') {
+                $user = User::create([
+                    'tenant_id' => $tenantId,
+                    'name' => $data['name'],
+                    'email' => $data['email'],
+                    'password' => $accountPassword,
+                    'is_active' => true,
+                ]);
+                $data['user_id'] = $user->id;
+            }
+
+            Employee::create($data);
+        });
+
+        return redirect()->route('employees.index')->with(
+            'success',
+            !empty($data['user_id'])
+                ? 'Karyawan dan akun login berhasil dibuat.'
+                : 'Karyawan ditambahkan. Akun login belum dibuat.'
+        );
     }
 
     public function show(Employee $item)
