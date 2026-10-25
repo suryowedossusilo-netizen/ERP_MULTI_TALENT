@@ -79,6 +79,8 @@ class EmployeeController extends Controller
             unset($data['salary']);
         }
 
+        $createsAccount = !empty($data['account_password']);
+
         DB::transaction(function () use ($data, $tenantId) {
             $accountPassword = $data['account_password'] ?? null;
             unset($data['account_password']);
@@ -100,7 +102,7 @@ class EmployeeController extends Controller
 
         return redirect()->route('employees.index')->with(
             'success',
-            !empty($data['user_id'])
+            $createsAccount
                 ? 'Karyawan dan akun login berhasil dibuat.'
                 : 'Karyawan ditambahkan. Akun login belum dibuat.'
         );
