@@ -1,15 +1,14 @@
 <?php
 namespace App\Http\Controllers\Auth;
-
 use App\Http\Controllers\Controller;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
-
+use Illuminate\Support\Carbon;
 class NewPasswordController extends Controller
 {
     public function showResetForm(Request $request, string $token)
@@ -26,49 +25,44 @@ class NewPasswordController extends Controller
         $data = $request->validate([
             'company' => 'required|string|max:255',
             'token' => 'required|string',
-            'email' => 'required|email',
+            'email' => 'required|email|max:255',
             'password' => 'required|string|min:8|confirmed',
         ]);
-
         $company = trim($data['company']);
-        $tenant = Tenant::active()
-            ->where(function ($query) use ($company) {
-                $query->where('slug', $company)->orWhere('domain', $company);
-            })->first();
+        $tenant = Tenant::active()->where(function ($query) use ($company) {
+            $query->where('slug', $company)->orWhere('domain', $company);
+        })->first();
 
-        $belongsToTenant = $tenant && User::where('tenant_id', $tenant->id)
+        $reset = $tenant ? DB::table('tenant_password_reset_tokens')
+            ->where('tenant_id', $tenant->id)
             ->where('email', $data['email'])
-            ->where('is_active', true)
-            ->exists();
+            ->where('token', hash('sha256', $data['token']))
+            ->first() : null;
 
-        if (!$belongsToTenant) {
-            return back()->withErrors([
-                'email' => 'Identitas perusahaan atau akun tidak valid.',
-            ])->withInput($request->only('company', 'email', 'token'));
+        if (!$reset || !$reset->created_at || Carbon::parse($reset->created_at)->addMinutes(60)->isPast()) {
+            return back()->withErrors(['email' => 'Tautan reset tidak valid atau sudah kedaluwarsa.'])
+                ->withInput($request->only('company', 'email', 'token'));
         }
 
-        // The current users.email column is globally unique. A tenant-aware reset-token
-        // store is required before allowing duplicate emails across tenants.
-        $status = Password::reset(
-            [
-                'email' => $data['email'],
-                'password' => $data['password'],
-                'password_confirmation' => $data['password_confirmation'],
-                'token' => $data['token'],
-            ],
-            function (User $user) use ($data) {
-                $user->forceFill([
-                    'password' => Hash::make($data['password']),
-                    'remember_token' => Str::random(60),
-                ])->save();
+        $user = User::where('tenant_id', $tenant->id)
+            ->where('email', $data['email'])->where('is_active', true)->first();
 
-                event(new PasswordReset($user));
-            }
-        );
-
-        return $status === Password::PASSWORD_RESET
-            ? redirect()->route('login')->with('success', __($status))
-            : back()->withErrors(['email' => __($status)])
+        if (!$user) {
+            return back()->withErrors(['email' => 'Tautan reset tidak valid atau sudah kedaluwarsa.'])
                 ->withInput($request->only('company', 'email', 'token'));
+        }
+
+        DB::transaction(function () use ($tenant, $data, $user) {
+            $user->forceFill([
+                'password' => Hash::make($data['password']),
+                'must_change_password' => false,
+                'remember_token' => Str::random(60),
+            ])->save();
+            DB::table('tenant_password_reset_tokens')
+                ->where('tenant_id', $tenant->id)->where('email', $data['email'])->delete();
+        });
+        event(new PasswordReset($user));
+
+        return redirect()->route('login')->with('success', 'Password berhasil diubah. Silakan masuk kembali.');
     }
 }
