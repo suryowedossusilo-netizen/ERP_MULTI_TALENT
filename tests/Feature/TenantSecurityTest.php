@@ -492,7 +492,7 @@ class TenantSecurityTest extends TestCase
             'action' => 'admin_reset',
         ]);
 
-        $this->get('/dashboard')->assertRedirect(route('password.force-change'));
+        $this->actingAs($employeeUser)->get('/dashboard')->assertRedirect(route('password.force-change'));
         $this->put(route('password.force-change.update'), [
             'password' => 'new-employee-password-123',
             'password_confirmation' => 'new-employee-password-123',
