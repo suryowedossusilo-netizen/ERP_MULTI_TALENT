@@ -23,7 +23,7 @@ class UserController extends Controller
     {
         $data = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->where(fn ($q) => $q->where('tenant_id', tenant()->id))],
             'password' => 'required|string|min:8',
         ]);
 
@@ -52,7 +52,7 @@ class UserController extends Controller
 
         $data = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($item->id)],
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->where(fn ($q) => $q->where('tenant_id', tenant()->id))->ignore($item->id)],
             'password' => 'nullable|string|min:8',
         ]);
 
