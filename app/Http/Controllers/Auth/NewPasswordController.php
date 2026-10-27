@@ -60,6 +60,14 @@ class NewPasswordController extends Controller
             ])->save();
             DB::table('tenant_password_reset_tokens')
                 ->where('tenant_id', $tenant->id)->where('email', $data['email'])->delete();
+            DB::table('employee_password_reset_logs')->insert([
+                'tenant_id' => $tenant->id,
+                'actor_user_id' => null,
+                'employee_user_id' => $user->id,
+                'employee_id' => $user->employee()->value('id'),
+                'action' => 'email_reset',
+                'created_at' => now(),
+            ]);
         });
         event(new PasswordReset($user));
 
