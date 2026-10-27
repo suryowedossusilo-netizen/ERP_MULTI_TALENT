@@ -9,13 +9,13 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
-    protected $fillable = ['tenant_id', 'name', 'email', 'password', 'is_active'];
+    protected $fillable = ['tenant_id', 'name', 'email', 'password', 'is_active', 'must_change_password'];
 
     protected $hidden = ['password', 'remember_token'];
 
     protected function casts(): array
     {
-        return ['password' => 'hashed', 'is_active' => 'boolean'];
+        return ['password' => 'hashed', 'is_active' => 'boolean', 'must_change_password' => 'boolean'];
     }
 
     public function tenant()   { return $this->belongsTo(Tenant::class); }
