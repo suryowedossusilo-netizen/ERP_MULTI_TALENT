@@ -8,8 +8,8 @@ Route::get('/', fn () => redirect()->route('login'));
 require __DIR__ . '/auth.php';
 
 Route::middleware(['tenant', 'tenant.status', 'auth', 'password.change.required'])->group(function () {
-    Route::get('/password/force-change', [\\App\\Http\\Controllers\\Auth\\ForcePasswordChangeController::class, 'edit'])->name('password.force-change');
-    Route::put('/password/force-change', [\\App\\Http\\Controllers\\Auth\\ForcePasswordChangeController::class, 'update'])->name('password.force-change.update');
+    Route::get('/password/force-change', [\App\Http\Controllers\Auth\ForcePasswordChangeController::class, 'edit'])->name('password.force-change');
+    Route::put('/password/force-change', [\App\Http\Controllers\Auth\ForcePasswordChangeController::class, 'update'])->name('password.force-change.update');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // User and role administration
@@ -27,6 +27,8 @@ Route::middleware(['tenant', 'tenant.status', 'auth', 'password.change.required'
     Route::middleware('permission:manage-employees')->group(function () {
         Route::resource('employees', \App\Http\Controllers\Employees\EmployeeController::class)
             ->parameters(['employees' => 'item']);
+        Route::post('employees/{item}/reset-password', [\App\Http\Controllers\Employees\EmployeePasswordController::class, 'reset'])
+            ->middleware('permission:reset-employee-password')->name('employees.reset-password');
         Route::resource('departments', \App\Http\Controllers\Employees\DepartmentController::class)
             ->parameters(['departments' => 'item']);
         Route::resource('positions', \App\Http\Controllers\Employees\PositionController::class)
