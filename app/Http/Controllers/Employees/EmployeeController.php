@@ -64,14 +64,14 @@ class EmployeeController extends Controller
             'department_id' => 'nullable|integer',
             'position_id' => 'nullable|integer',
             'phone' => 'nullable|string|max:50',
-            'email' => 'nullable|email|max:255|required_with:account_password',
+            'email' => 'nullable|email|max:255',
             'account_password' => 'nullable|string|min:8',
             'join_date' => 'nullable|date',
             'salary' => 'nullable|numeric|min:0',
         ]);
         if (!empty($data['account_password'])) {
             validator($data, [
-                'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
+                'email' => ['nullable', 'email', 'max:255', Rule::unique('users', 'email')->where(fn ($q) => $q->where('tenant_id', $tenantId))],
             ])->validate();
         }
         $data = $this->validateRelations($data);
@@ -90,7 +90,7 @@ class EmployeeController extends Controller
                 $user = User::create([
                     'tenant_id' => $tenantId,
                     'name' => $data['name'],
-                    'email' => $data['email'],
+                    'email' => $data['email'] ?? null,
                     'password' => $accountPassword,
                     'is_active' => true,
                 ]);
