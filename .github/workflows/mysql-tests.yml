@@ -54,7 +54,7 @@ jobs:
         run: |
           php -r '$pdo = new PDO("mysql:host=".getenv("DB_HOST").";port=".getenv("DB_PORT").";dbname=".getenv("DB_DATABASE"), getenv("DB_USERNAME"), getenv("DB_PASSWORD"), [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]); echo "MySQL server version: ", $pdo->query("SELECT VERSION()")->fetchColumn(), PHP_EOL;'
 
-      - name: Verify Laravel route registration with MySQL selected (no migrations)
+      - name: Verify Laravel route registration with MySQL selected
         env:
           APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
           DB_CONNECTION: mysql
@@ -65,5 +65,26 @@ jobs:
           DB_PASSWORD: testing-only-password
         run: php artisan route:list --except-vendor
 
-      # Feature tests use RefreshDatabase and would run migrations.
-      # Do not run them until the owner separately approves a migration test plan.
+      # This job uses only the disposable MySQL service created above.
+      # It never connects to the owner's active/development database.
+      - name: Run all migrations on disposable MySQL
+        env:
+          APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: erp_multi_talent_test
+          DB_USERNAME: root
+          DB_PASSWORD: testing-only-password
+        run: php artisan migrate:fresh --force
+
+      - name: Run feature tests against disposable MySQL
+        env:
+          APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: erp_multi_talent_test
+          DB_USERNAME: root
+          DB_PASSWORD: testing-only-password
+        run: vendor/bin/phpunit
