@@ -18,7 +18,7 @@ class RoleSeeder extends Seeder
         $staff->permissions()->sync(
             Permission::whereNotIn('name', [
                 'manage-tenants', 'manage-users', 'manage-roles',
-                'manage-salaries', 'manage-payroll',
+                'manage-salaries', 'manage-payroll', 'reset-employee-password',
             ])->pluck('id')
         );
     }
