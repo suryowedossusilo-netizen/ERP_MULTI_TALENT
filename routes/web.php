@@ -7,7 +7,9 @@ Route::get('/', fn () => redirect()->route('login'));
 
 require __DIR__ . '/auth.php';
 
-Route::middleware(['tenant', 'tenant.status', 'auth'])->group(function () {
+Route::middleware(['tenant', 'tenant.status', 'auth', 'password.change.required'])->group(function () {
+    Route::get('/password/force-change', [\\App\\Http\\Controllers\\Auth\\ForcePasswordChangeController::class, 'edit'])->name('password.force-change');
+    Route::put('/password/force-change', [\\App\\Http\\Controllers\\Auth\\ForcePasswordChangeController::class, 'update'])->name('password.force-change.update');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // User and role administration
