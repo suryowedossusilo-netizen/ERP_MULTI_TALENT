@@ -426,4 +426,105 @@ class TenantSecurityTest extends TestCase
         $this->actingAs($user)->post('/logout')->assertRedirect('/login');
         $this->assertGuest();
     }
+
+    public function test_employee_login_account_can_be_created_without_email(): void
+    {
+        $tenant = $this->tenant('employee-no-email-company');
+        $admin = $this->user($tenant, 'no-email-admin@example.test');
+        $this->grant($admin, 'manage-employees');
+
+        $this->actingAs($admin)->post(route('employees.store'), [
+            'employee_code' => 'EMP-NO-EMAIL',
+            'name' => 'Employee Without Email',
+            'account_password' => 'employee-password-123',
+        ])->assertRedirect(route('employees.index'));
+
+        $employee = Employee::where('tenant_id', $tenant->id)->where('employee_code', 'EMP-NO-EMAIL')->firstOrFail();
+        $this->assertNotNull($employee->user_id);
+        $this->assertDatabaseHas('users', [
+            'id' => $employee->user_id,
+            'tenant_id' => $tenant->id,
+            'email' => null,
+        ]);
+    }
+
+    public function test_same_email_can_be_used_by_accounts_in_different_tenants(): void
+    {
+        $tenantA = $this->tenant('same-email-company-a');
+        $tenantB = $this->tenant('same-email-company-b');
+
+        $userA = $this->user($tenantA, 'shared@example.test');
+        $userB = $this->user($tenantB, 'shared@example.test');
+
+        $this->assertNotSame($userA->id, $userB->id);
+        $this->assertDatabaseHas('users', ['id' => $userA->id, 'tenant_id' => $tenantA->id]);
+        $this->assertDatabaseHas('users', ['id' => $userB->id, 'tenant_id' => $tenantB->id]);
+    }
+
+    public function test_employee_password_reset_is_tenant_scoped_and_requires_password_change(): void
+    {
+        $tenant = $this->tenant('password-reset-company');
+        $admin = $this->user($tenant, 'password-reset-admin@example.test');
+        $employeeUser = $this->user($tenant, 'password-reset-employee@example.test');
+        $employee = Employee::create([
+            'tenant_id' => $tenant->id,
+            'user_id' => $employeeUser->id,
+            'employee_code' => 'EMP-RESET-01',
+            'name' => 'Reset Employee',
+            'status' => 'active',
+        ]);
+        $this->grant($admin, 'manage-employees');
+        $this->grant($admin, 'reset-employee-password');
+
+        $response = $this->actingAs($admin)->post(route('employees.reset-password', $employee));
+        $response->assertRedirect();
+        $response->assertSessionHas('temporary_password');
+
+        $temporaryPassword = session('temporary_password');
+        $employeeUser->refresh();
+        $this->assertTrue(\Illuminate\Support\Facades\Hash::check($temporaryPassword, $employeeUser->password));
+        $this->assertTrue($employeeUser->must_change_password);
+        $this->assertDatabaseHas('employee_password_reset_logs', [
+            'tenant_id' => $tenant->id,
+            'actor_user_id' => $admin->id,
+            'employee_user_id' => $employeeUser->id,
+            'employee_id' => $employee->id,
+            'action' => 'admin_reset',
+        ]);
+
+        $this->get('/dashboard')->assertRedirect(route('password.force-change'));
+        $this->put(route('password.force-change.update'), [
+            'password' => 'new-employee-password-123',
+            'password_confirmation' => 'new-employee-password-123',
+        ])->assertRedirect(route('dashboard'));
+
+        $this->assertFalse($employeeUser->fresh()->must_change_password);
+        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('new-employee-password-123', $employeeUser->fresh()->password));
+    }
+
+    public function test_password_reset_token_cannot_be_used_by_another_tenant(): void
+    {
+        $tenantA = $this->tenant('reset-token-company-a');
+        $tenantB = $this->tenant('reset-token-company-b');
+        $userA = $this->user($tenantA, 'shared-reset@example.test');
+        $this->user($tenantB, 'shared-reset@example.test');
+        $plainToken = 'known-reset-token-for-tests';
+        \Illuminate\Support\Facades\DB::table('tenant_password_reset_tokens')->insert([
+            'tenant_id' => $tenantA->id,
+            'email' => 'shared-reset@example.test',
+            'token' => hash('sha256', $plainToken),
+            'created_at' => now(),
+        ]);
+
+        $this->post(route('password.update'), [
+            'company' => $tenantB->slug,
+            'email' => 'shared-reset@example.test',
+            'token' => $plainToken,
+            'password' => 'new-password-123',
+            'password_confirmation' => 'new-password-123',
+        ])->assertSessionHasErrors('email');
+
+        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('test-password-123', $userA->fresh()->password));
+    }
+
 }
