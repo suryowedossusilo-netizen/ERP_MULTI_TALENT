@@ -57,7 +57,9 @@ class LoginController extends Controller
         $request->session()->regenerate();
         $request->session()->put('tenant_id', $tenant->id);
 
-        return redirect()->intended(route('dashboard'));
+        return $user->must_change_password
+            ? redirect()->route('password.force-change')
+            : redirect()->intended(route('dashboard'));
     }
 
     public function logout(Request $request)
