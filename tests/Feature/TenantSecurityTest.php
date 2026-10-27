@@ -549,6 +549,11 @@ class TenantSecurityTest extends TestCase
         ])->assertRedirect(route('login'));
 
         $this->assertTrue(\Illuminate\Support\Facades\Hash::check('replacement-password-123', $user->fresh()->password));
+        $this->assertDatabaseHas('employee_password_reset_logs', [
+            'tenant_id' => $tenant->id,
+            'employee_user_id' => $user->id,
+            'action' => 'email_reset',
+        ]);
         $this->assertDatabaseMissing('tenant_password_reset_tokens', [
             'tenant_id' => $tenant->id,
             'email' => 'valid-reset@example.test',
