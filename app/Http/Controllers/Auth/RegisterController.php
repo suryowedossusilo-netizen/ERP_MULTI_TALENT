@@ -24,7 +24,7 @@ class RegisterController extends Controller
         $data = $request->validate([
             'company_name' => 'required|string|max:255',
             'name' => 'required|string|max:255',
-            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
+            'email' => 'required|email|max:255',
             'password' => 'required|string|min:8|confirmed',
         ]);
 
@@ -58,7 +58,7 @@ class RegisterController extends Controller
             $permissionNames = [
                 'manage-users', 'manage-roles', 'manage-products', 'manage-inventory',
                 'manage-sales', 'manage-purchasing', 'manage-finance', 'view-reports',
-                'manage-settings', 'manage-employees', 'manage-salaries', 'manage-payroll',
+                'manage-settings', 'manage-employees', 'manage-salaries', 'manage-payroll', 'reset-employee-password',
             ];
             $permissionIds = [];
             foreach ($permissionNames as $name) {
