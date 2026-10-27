@@ -527,4 +527,63 @@ class TenantSecurityTest extends TestCase
         $this->assertTrue(\Illuminate\Support\Facades\Hash::check('test-password-123', $userA->fresh()->password));
     }
 
+
+    public function test_valid_tenant_password_reset_token_changes_password_and_is_single_use(): void
+    {
+        $tenant = $this->tenant('valid-reset-company');
+        $user = $this->user($tenant, 'valid-reset@example.test');
+        $plainToken = 'valid-reset-token-for-tests';
+        \\Illuminate\\Support\\Facades\\DB::table('tenant_password_reset_tokens')->insert([
+            'tenant_id' => $tenant->id,
+            'email' => 'valid-reset@example.test',
+            'token' => hash('sha256', $plainToken),
+            'created_at' => now(),
+        ]);
+
+        $this->post(route('password.update'), [
+            'company' => $tenant->slug,
+            'email' => 'valid-reset@example.test',
+            'token' => $plainToken,
+            'password' => 'replacement-password-123',
+            'password_confirmation' => 'replacement-password-123',
+        ])->assertRedirect(route('login'));
+
+        $this->assertTrue(\\Illuminate\\Support\\Facades\\Hash::check('replacement-password-123', $user->fresh()->password));
+        $this->assertDatabaseMissing('tenant_password_reset_tokens', [
+            'tenant_id' => $tenant->id,
+            'email' => 'valid-reset@example.test',
+        ]);
+
+        $this->post(route('password.update'), [
+            'company' => $tenant->slug,
+            'email' => 'valid-reset@example.test',
+            'token' => $plainToken,
+            'password' => 'another-password-123',
+            'password_confirmation' => 'another-password-123',
+        ])->assertSessionHasErrors('email');
+    }
+
+    public function test_expired_tenant_password_reset_token_is_rejected(): void
+    {
+        $tenant = $this->tenant('expired-reset-company');
+        $user = $this->user($tenant, 'expired-reset@example.test');
+        $plainToken = 'expired-reset-token-for-tests';
+        \\Illuminate\\Support\\Facades\\DB::table('tenant_password_reset_tokens')->insert([
+            'tenant_id' => $tenant->id,
+            'email' => 'expired-reset@example.test',
+            'token' => hash('sha256', $plainToken),
+            'created_at' => now()->subMinutes(61),
+        ]);
+
+        $this->post(route('password.update'), [
+            'company' => $tenant->slug,
+            'email' => 'expired-reset@example.test',
+            'token' => $plainToken,
+            'password' => 'replacement-password-123',
+            'password_confirmation' => 'replacement-password-123',
+        ])->assertSessionHasErrors('email');
+
+        $this->assertTrue(\\Illuminate\\Support\\Facades\\Hash::check('test-password-123', $user->fresh()->password));
+    }
+
 }
