@@ -10,6 +10,8 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__ . '/../routes/console.php',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // Trust the hosting proxy so Laravel detects HTTPS correctly behind Render's TLS edge.
+        $middleware->trustProxies(at: '*');
         $middleware->alias([
             'tenant'         => \App\Http\Middleware\IdentifyTenant::class,
             'tenant.status'  => \App\Http\Middleware\CheckTenantStatus::class,
