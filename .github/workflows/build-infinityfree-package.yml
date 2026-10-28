@@ -40,6 +40,7 @@ jobs:
             --exclude='tests/' \
             --exclude='public/' \
             --exclude='.env' \
+            --exclude='.htaccess' \
             --exclude='DEPLOY_INFINITYFREE.md' \
             --exclude='.phpunit.cache/' \
             --exclude='storage/logs/*.log' \
@@ -70,49 +71,27 @@ jobs:
           PHP
 
           cat > .deploy/infinityfree/htdocs/.htaccess <<'HTACCESS'
-          Options -Indexes -MultiViews
-          DirectoryIndex index.php
-
           <IfModule mod_rewrite.c>
               RewriteEngine On
 
-              # Laravel public-disk files are stored in htdocs/storage/app/public.
-              RewriteRule ^storage/(.*)$ /storage/app/public/$1 [END]
+              # Block all web requests to Laravel source, configuration, and .env.
+              RewriteRule ^erp_app(?:/|$) - [F,L,NC]
 
-              # Prevent direct HTTP access to application code and configuration.
-              RewriteRule ^erp_app(?:/|$) - [F,L]
+              # Block executable scripts in public uploads.
+              RewriteRule ^storage/.*\.(?:php[0-9]?|phtml|phar)(?:/|$) - [F,L,NC]
 
+              # Let the physical public-storage path resolve without another rewrite.
+              RewriteRule ^storage/app/public/ - [L]
+
+              # Map Laravel's /storage/* URLs to htdocs/storage/app/public/*.
+              RewriteRule ^storage/(.*)$ storage/app/public/$1 [L]
+
+              # Keep existing public files as-is; send application routes to Laravel.
               RewriteCond %{REQUEST_FILENAME} -f [OR]
               RewriteCond %{REQUEST_FILENAME} -d
               RewriteRule ^ - [L]
 
               RewriteRule ^ index.php [L]
-          </IfModule>
-          HTACCESS
-
-          cat > .deploy/infinityfree/htdocs/erp_app/.htaccess <<'HTACCESS'
-          Options -Indexes
-          <IfModule mod_authz_core.c>
-              Require all denied
-          </IfModule>
-          <IfModule !mod_authz_core.c>
-              Order allow,deny
-              Deny from all
-          </IfModule>
-          HTACCESS
-
-          cat > .deploy/infinityfree/htdocs/storage/.htaccess <<'HTACCESS'
-          Options -Indexes
-          <IfModule mod_authz_core.c>
-              <FilesMatch "\.(?i:php[0-9]?|phtml|phar)$">
-                  Require all denied
-              </FilesMatch>
-          </IfModule>
-          <IfModule !mod_authz_core.c>
-              <FilesMatch "\.(?i:php[0-9]?|phtml|phar)$">
-                  Order allow,deny
-                  Deny from all
-              </FilesMatch>
           </IfModule>
           HTACCESS
 
