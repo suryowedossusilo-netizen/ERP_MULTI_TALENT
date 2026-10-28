@@ -49,8 +49,8 @@ jobs:
           cat > .deploy/infinityfree/htdocs/index.php <<'PHP'
           <?php
 
-          use Illuminate\\Foundation\\Application;
-          use Illuminate\\Http\\Request;
+          use Illuminate\Foundation\Application;
+          use Illuminate\Http\Request;
 
           define('LARAVEL_START', microtime(true));
 
@@ -84,7 +84,7 @@ jobs:
           cat > .deploy/infinityfree/htdocs/storage/.htaccess <<'HTACCESS'
           Options -Indexes
           <IfModule mod_authz_core.c>
-              <FilesMatch "\\.(?i:php[0-9]?|phtml|phar)$">
+              <FilesMatch "\.(?i:php[0-9]?|phtml|phar)$">
                   Require all denied
               </FilesMatch>
           </IfModule>
@@ -113,7 +113,7 @@ jobs:
           large_php="$(find .deploy/infinityfree/erp_app -type f -name '*.php' -size +950k -print)"
           if [ -n "$large_php" ]; then
             echo "::error::PHP files near the shared host's 1 MB upload/processing limit were found:"
-            printf '%s\\n' "$large_php"
+            printf '%s\n' "$large_php"
             exit 1
           fi
           mkdir -p .deploy/infinityfree/erp_app/storage/framework/cache/data
