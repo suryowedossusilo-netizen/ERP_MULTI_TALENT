@@ -1,8 +1,8 @@
 FROM php:8.3-fpm-alpine
 
-RUN apk add --no-cache nginx supervisor bash icu-libs libzip oniguruma \
-    && apk add --no-cache --virtual .build-deps $PHPIZE_DEPS icu-dev libzip-dev oniguruma-dev \
-    && docker-php-ext-install -j"$(nproc)" pdo_mysql mbstring intl zip opcache bcmath \
+RUN apk add --no-cache nginx supervisor bash icu-libs libzip oniguruma libxml2 \
+    && apk add --no-cache --virtual .build-deps $PHPIZE_DEPS icu-dev libzip-dev oniguruma-dev libxml2-dev \
+    && docker-php-ext-install -j"$(nproc)" pdo_mysql mbstring intl zip opcache bcmath xml dom simplexml xmlreader xmlwriter \
     && apk del .build-deps \
     && cp /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini \
     && mkdir -p /var/lib/nginx/tmp/client_body /var/lib/nginx/tmp/fastcgi /var/lib/nginx/tmp/proxy /var/lib/nginx/tmp/uwsgi /var/lib/nginx/tmp/scgi \
