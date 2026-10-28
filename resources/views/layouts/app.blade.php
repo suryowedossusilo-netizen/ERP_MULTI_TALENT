@@ -23,19 +23,68 @@
     </div>
 </div>
 <script>
-    // Toggle sidebar (mobile)
-    document.querySelector('.hamburger')?.addEventListener('click', () => {
-        document.body.classList.toggle('sidebar-open');
+    // Sidebar toggle: drawer on smaller screens, compact sidebar on desktop.
+    const sidebarToggle = document.querySelector('.hamburger');
+    const isMobileSidebar = () => window.matchMedia('(max-width: 1024px)').matches;
+
+    sidebarToggle?.addEventListener('click', () => {
+        if (isMobileSidebar()) {
+            document.body.classList.toggle('sidebar-open');
+        } else {
+            document.body.classList.toggle('sidebar-collapsed');
+        }
     });
-    // Toggle user dropdown
+
+    // Close the mobile drawer when clicking outside it or choosing a navigation link.
+    document.addEventListener('click', event => {
+        if (!isMobileSidebar() || !document.body.classList.contains('sidebar-open')) return;
+        const sidebar = document.querySelector('.sidebar');
+        if (sidebar && !sidebar.contains(event.target) && !sidebarToggle?.contains(event.target)) {
+            document.body.classList.remove('sidebar-open');
+        }
+    });
+    document.querySelectorAll('.sidebar .nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+            if (isMobileSidebar()) document.body.classList.remove('sidebar-open');
+        });
+    });
+
+    // Keep the appropriate sidebar state when crossing the responsive breakpoint.
+    window.addEventListener('resize', () => {
+        if (isMobileSidebar()) {
+            document.body.classList.remove('sidebar-collapsed');
+        } else {
+            document.body.classList.remove('sidebar-open');
+        }
+    });
+
+    // Toggle user dropdown; support keyboard activation too.
     const chip = document.querySelector('.user-chip');
     const menu = document.querySelector('.user-menu');
-    chip?.addEventListener('click', e => { e.stopPropagation(); menu?.classList.toggle('open'); });
+    const toggleUserMenu = event => {
+        event.stopPropagation();
+        menu?.classList.toggle('open');
+    };
+    chip?.addEventListener('click', toggleUserMenu);
+    chip?.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            toggleUserMenu(event);
+        }
+    });
     document.addEventListener('click', () => menu?.classList.remove('open'));
-    // Auto-hide alert
-    setTimeout(() => document.querySelectorAll('.alert').forEach(a => {
-        a.style.transition = 'opacity .5s'; a.style.opacity = '0';
-        setTimeout(() => a.remove(), 500);
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') {
+            menu?.classList.remove('open');
+            document.body.classList.remove('sidebar-open');
+        }
+    });
+
+    // Auto-hide alerts.
+    setTimeout(() => document.querySelectorAll('.alert').forEach(alert => {
+        alert.style.transition = 'opacity .5s';
+        alert.style.opacity = '0';
+        setTimeout(() => alert.remove(), 500);
     }), 4000);
 </script>
 @stack('scripts')
