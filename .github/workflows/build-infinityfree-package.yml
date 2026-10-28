@@ -1,0 +1,136 @@
+name: Build InfinityFree deployment package
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+
+      - name: Set up PHP and Composer
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer:v2
+          extensions: bcmath, ctype, curl, dom, fileinfo, intl, mbstring, openssl, pdo, pdo_mysql, tokenizer, xml, zip
+          coverage: none
+
+      - name: Prepare a safe shared-hosting layout
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .deploy/infinityfree
+          mkdir -p .deploy/infinityfree/erp_app
+          mkdir -p .deploy/infinityfree/htdocs/storage
+
+          rsync -a ./ .deploy/infinityfree/erp_app/ \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='.deploy/' \
+            --exclude='vendor/' \
+            --exclude='node_modules/' \
+            --exclude='tests/' \
+            --exclude='public/' \
+            --exclude='.env' \
+            --exclude='.phpunit.cache/' \
+            --exclude='storage/logs/*.log' \
+            --exclude='storage/framework/lsp-*'
+
+          rsync -a --exclude='index.php' --exclude='.htaccess' public/ .deploy/infinityfree/htdocs/
+
+          cat > .deploy/infinityfree/htdocs/index.php <<'PHP'
+          <?php
+
+          use Illuminate\\Foundation\\Application;
+          use Illuminate\\Http\\Request;
+
+          define('LARAVEL_START', microtime(true));
+
+          $applicationPath = dirname(__DIR__) . '/erp_app';
+
+          if (file_exists($maintenance = $applicationPath . '/storage/framework/maintenance.php')) {
+              require $maintenance;
+          }
+
+          require $applicationPath . '/vendor/autoload.php';
+
+          /** @var Application $app */
+          $app = require_once $applicationPath . '/bootstrap/app.php';
+
+          $app->handleRequest(Request::capture());
+          PHP
+
+          cat > .deploy/infinityfree/htdocs/.htaccess <<'HTACCESS'
+          Options -Indexes -MultiViews
+          DirectoryIndex index.php
+
+          <IfModule mod_rewrite.c>
+              RewriteEngine On
+              RewriteCond %{REQUEST_FILENAME} -f [OR]
+              RewriteCond %{REQUEST_FILENAME} -d
+              RewriteRule ^ - [L]
+              RewriteRule ^ index.php [L]
+          </IfModule>
+          HTACCESS
+
+          cat > .deploy/infinityfree/htdocs/storage/.htaccess <<'HTACCESS'
+          Options -Indexes
+          <IfModule mod_authz_core.c>
+              <FilesMatch "\\.(?i:php[0-9]?|phtml|phar)$">
+                  Require all denied
+              </FilesMatch>
+          </IfModule>
+          HTACCESS
+
+          cat > .deploy/infinityfree/htdocs/storage/index.html <<'HTML'
+          <!doctype html><title>Not found</title>
+          HTML
+
+      - name: Install production dependencies without optimized classmaps
+        run: composer --working-dir=.deploy/infinityfree/erp_app install --no-dev --no-interaction --prefer-dist --no-progress --no-scripts
+
+      - name: Build Laravel package metadata
+        working-directory: .deploy/infinityfree/erp_app
+        env:
+          APP_ENV: production
+          APP_DEBUG: 'false'
+          APP_KEY: 'base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA='
+          PUBLIC_STORAGE_ROOT: '../htdocs/storage'
+        run: php artisan package:discover --ansi
+
+      - name: Validate hosting compatibility and permissions
+        shell: bash
+        run: |
+          set -euo pipefail
+          large_php="$(find .deploy/infinityfree/erp_app -type f -name '*.php' -size +950k -print)"
+          if [ -n "$large_php" ]; then
+            echo "::error::PHP files near the shared host's 1 MB upload/processing limit were found:"
+            printf '%s\\n' "$large_php"
+            exit 1
+          fi
+          mkdir -p .deploy/infinityfree/erp_app/storage/framework/cache/data
+          mkdir -p .deploy/infinityfree/erp_app/storage/framework/sessions
+          mkdir -p .deploy/infinityfree/erp_app/storage/framework/views
+          mkdir -p .deploy/infinityfree/erp_app/storage/logs
+          mkdir -p .deploy/infinityfree/erp_app/storage/app/private
+          mkdir -p .deploy/infinityfree/erp_app/storage/app/public
+          mkdir -p .deploy/infinityfree/erp_app/bootstrap/cache
+          chmod -R u+rwX,go+rX .deploy/infinityfree/erp_app/storage
+          chmod -R u+rwX,go+rX .deploy/infinityfree/erp_app/bootstrap/cache
+          chmod -R u+rwX,go+rX .deploy/infinityfree/htdocs/storage
+
+      - name: Upload deployment bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: erp-multi-talent-infinityfree
+          path: .deploy/infinityfree/
+          if-no-files-found: error
+          retention-days: 7

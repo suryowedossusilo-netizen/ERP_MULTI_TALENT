@@ -1,9 +1,9 @@
 <?php
-use Illuminate\Foundation\Application;
-use Illuminate\Foundation\Configuration\Exceptions;
-use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\\Foundation\\Application;
+use Illuminate\\Foundation\\Configuration\\Exceptions;
+use Illuminate\\Foundation\\Configuration\\Middleware;
 
-return Application::configure(basePath: dirname(__DIR__))
+$app = Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__ . '/../routes/web.php',
         api: __DIR__ . '/../routes/api.php',
@@ -13,12 +13,21 @@ return Application::configure(basePath: dirname(__DIR__))
         // Trust the hosting proxy so Laravel detects HTTPS correctly behind Render's TLS edge.
         $middleware->trustProxies(at: '*');
         $middleware->alias([
-            'tenant'         => \App\Http\Middleware\IdentifyTenant::class,
-            'tenant.status'  => \App\Http\Middleware\CheckTenantStatus::class,
-            'permission'     => \App\Http\Middleware\CheckPermission::class,
-            'password.change.required' => \App\Http\Middleware\RequirePasswordChange::class,
+            'tenant'         => \\App\\Http\\Middleware\\IdentifyTenant::class,
+            'tenant.status'  => \\App\\Http\\Middleware\\CheckTenantStatus::class,
+            'permission'     => \\App\\Http\\Middleware\\CheckPermission::class,
+            'password.change.required' => \\App\\Http\\Middleware\\RequirePasswordChange::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
     })->create();
+
+// Shared-hosting package layout: keep Laravel outside the public document root.
+// On Docker/standard Laravel hosts, fall back to Laravel's normal /public directory.
+$externalPublicPath = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'htdocs';
+if (is_file($externalPublicPath . DIRECTORY_SEPARATOR . 'index.php')) {
+    $app->usePublicPath($externalPublicPath);
+}
+
+return $app;
