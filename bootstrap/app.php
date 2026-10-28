@@ -1,7 +1,7 @@
 <?php
-use Illuminate\Foundation\Application;
-use Illuminate\Foundation\Configuration\Exceptions;
-use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\\Foundation\\Application;
+use Illuminate\\Foundation\\Configuration\\Exceptions;
+use Illuminate\\Foundation\\Configuration\\Middleware;
 
 $app = Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -10,24 +10,27 @@ $app = Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__ . '/../routes/console.php',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // Trust the hosting proxy so Laravel detects HTTPS correctly behind Render's TLS edge.
+        // Trust the hosting proxy so Laravel detects HTTPS correctly behind TLS termination.
         $middleware->trustProxies(at: '*');
         $middleware->alias([
-            'tenant'         => \App\Http\Middleware\IdentifyTenant::class,
-            'tenant.status'  => \App\Http\Middleware\CheckTenantStatus::class,
-            'permission'     => \App\Http\Middleware\CheckPermission::class,
-            'password.change.required' => \App\Http\Middleware\RequirePasswordChange::class,
+            'tenant'         => \\App\\Http\\Middleware\\IdentifyTenant::class,
+            'tenant.status'  => \\App\\Http\\Middleware\\CheckTenantStatus::class,
+            'permission'     => \\App\\Http\\Middleware\\CheckPermission::class,
+            'password.change.required' => \\App\\Http\\Middleware\\RequirePasswordChange::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
     })->create();
 
-// Shared-hosting package layout: keep Laravel outside the public document root.
-// On Docker/standard Laravel hosts, fall back to Laravel's normal /public directory.
-$externalPublicPath = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'htdocs';
-if (is_file($externalPublicPath . DIRECTORY_SEPARATOR . 'index.php')) {
-    $app->usePublicPath($externalPublicPath);
+// InfinityFree's document root is htdocs. The deployment bundle keeps the
+// Laravel application in htdocs/erp_app and places the public files in htdocs.
+$sharedHostingPublicPath = dirname(__DIR__, 2);
+if (
+    basename($sharedHostingPublicPath) === 'htdocs'
+    && is_file($sharedHostingPublicPath . DIRECTORY_SEPARATOR . 'index.php')
+) {
+    $app->usePublicPath($sharedHostingPublicPath);
 }
 
 return $app;

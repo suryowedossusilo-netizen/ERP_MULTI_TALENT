@@ -1,50 +1,73 @@
 # Deployment ERP_MULTI_TALENT ke InfinityFree (paket gratis)
 
-Target ini ditujukan untuk **demo/staging awal**, bukan langsung untuk data perusahaan yang sensitif. Paket gratis InfinityFree mengiklankan PHP 8.3, MySQL 8.0/MariaDB, SSL, penyimpanan 5 GB, dan tanpa kartu pembayaran. Paket gratis tidak menyediakan SSH/terminal; karena itu dependensi Composer disiapkan oleh GitHub Actions sebelum diunggah.
+Status: paket Laravel sudah dapat dibangun di GitHub Actions. **Build bukan berarti aplikasi sudah terpasang di hosting.** Untuk akun gratis, siapkan paket lalu unggah isinya ke `htdocs` melalui File Manager atau klien FTP secara manual.
 
-## Syarat dan batasan
+InfinityFree mengonfirmasi bahwa paket gratis tidak menyediakan integrasi Git langsung. Dokumentasi mereka juga mencatat bahwa document root harus tetap `htdocs`, tidak ada SSH/terminal untuk menjalankan Composer/Artisan, dan file PHP di atas 1 MB dapat ditolak. Lihat referensi resmi di bagian akhir.
 
-- Gunakan paket gratis saja; jangan aktifkan upgrade atau layanan berbayar.
-- Workflow hanya menyiapkan berkas dan dependency Laravel. Workflow **tidak** menjalankan `migrate`, `db:seed`, atau mengubah database.
-- Repository ini publik. File `.env`, APP_KEY, kata sandi, dan kredensial database **tidak boleh** masuk ke GitHub.
-- InfinityFree tidak menyediakan SSH/Composer/Artisan di server gratis. Dependensi dibangun di GitHub Actions dan diunggah menggunakan FTP/File Manager. Host juga menerapkan batas tertentu untuk file PHP, sehingga workflow menghindari Composer optimized classmap dan memeriksa file PHP yang mendekati 1 MB.
-- Jangan gunakan untuk data karyawan/keuangan nyata sebelum audit keamanan, pencadangan, dan izin akses selesai. Hosting gratis/shared memiliki batas sumber daya dan bukan pengganti layanan produksi yang terkelola.
+## Prinsip aman
 
-## Langkah deployment
+- Tetap gunakan paket gratis; tidak perlu menambahkan kartu.
+- Workflow menyiapkan file dan dependency Laravel saja. Workflow **tidak** menjalankan `migrate`, `db:seed`, atau mengubah database.
+- Repository ini publik. Jangan pernah meng-commit atau mengunggah file `.env`, APP_KEY asli, password database, atau kredensial hosting ke GitHub.
+- Paket menghindari optimized Composer classmap agar tidak menghasilkan file PHP besar yang ditolak oleh hosting.
+- Ini untuk demo/staging awal. Jangan gunakan untuk data karyawan/keuangan nyata sebelum keamanan, backup, dan batasan hosting dinilai.
 
-1. Buat akun gratis di https://www.infinityfree.com/ menggunakan email. Pilih subdomain gratis dan aktifkan/konfirmasikan SSL sebelum menggunakan HTTPS.
-2. Di panel hosting, buat database MySQL. Catat **hostname database, nama database, username, dan password** secara pribadi. Jangan kirim password FTP/database di chat.
-3. Buka repository GitHub `ERP_MULTI_TALENT` → tab **Actions** → workflow **Build InfinityFree deployment package**. Workflow otomatis berjalan pada push ke `main`; tunggu status hijau.
-4. Buka run yang berhasil, unduh artifact **erp-multi-talent-infinityfree**, lalu ekstrak ZIP hasil unduhan di komputer.
-5. Dengan FileZilla/FTP, unggah folder **`erp_app`** ke direktori akun yang sejajar dengan `htdocs`. Unggah **isi** folder `htdocs` paket ke folder `htdocs` hosting. Jangan menaruh seluruh folder Laravel di dalam `htdocs`; kode aplikasi harus berada di luar document root.
-6. Di `erp_app`, salin `.env.example` menjadi `.env`. Isi:
-   - `APP_URL`: alamat HTTPS subdomain yang kamu pilih.
-   - `APP_KEY`: isi key acak 32-byte dengan awalan `base64:`. Jika memakai Termux yang sudah memiliki PHP, jalankan perintah berikut dan salin hasilnya ke `.env`:
-     `php -r 'echo "base64:".base64_encode(random_bytes(32)).PHP_EOL;'`
-   - `DB_HOST`, `DB_DATABASE`, `DB_USERNAME`, dan `DB_PASSWORD`: nilai persis dari panel MySQL hosting.
-   - `PUBLIC_STORAGE_ROOT=../htdocs/storage`
-   Jangan unggah file `.env` ke repository.
-7. Pastikan folder `erp_app/storage`, subfolder di dalamnya, dan `erp_app/bootstrap/cache` dapat ditulis oleh PHP. Jika perlu, atur permission melalui File Manager menjadi `775` untuk folder tersebut, bukan untuk seluruh akun.
-8. Buka `https://subdomain-kamu/login`. Jika muncul 500, cek `erp_app/storage/logs/laravel.log`; jangan menampilkan log atau file `.env` ke publik.
-9. Database baru masih kosong. Sampai ada persetujuan terpisah untuk inisialisasi skema database, login dan fitur yang membutuhkan tabel **belum siap digunakan**. Tidak ada migrasi atau seeder yang dijalankan oleh paket ini.
+## A. Bangun dan unduh paket
 
-## Jika build gagal
+1. Buka tab **Actions** di GitHub repository `ERP_MULTI_TALENT`.
+2. Pilih workflow **Build InfinityFree deployment package**. Workflow otomatis berjalan saat ada push ke `main`; buka run terakhir dengan status hijau.
+3. Di bagian **Artifacts**, unduh `erp-multi-talent-infinityfree` lalu ekstrak ZIP ke komputer.
+4. ZIP tersebut berisi **isi document root** yang siap diunggah, bukan folder `htdocs` bertingkat.
 
-Buka run workflow yang merah di tab Actions dan lihat log langkah yang gagal. Jangan menambahkan file `.env` atau kredensial sebagai workaround. Paket dapat dibangun ulang dengan **Run workflow** setelah masalah diperbaiki.
+## B. Unggah ke InfinityFree
 
-## Opsi pembanding
+1. Buka File Manager atau hubungkan klien FTP ke akun hosting.
+2. Buka folder website bernama `htdocs` (atau folder `htdocs` domain yang tepat bila memakai addon domain).
+3. Unggah **semua isi** ZIP hasil build tepat ke dalam folder itu. Jangan unggah file ZIP saja, dan jangan membuat lapisan folder `htdocs/htdocs`.
+4. Struktur akhirnya seharusnya seperti:
+   ```
+   htdocs/
+   ├── index.php
+   ├── .htaccess
+   ├── css/ dan aset publik lainnya
+   ├── erp_app/
+   │   ├── app/
+   │   ├── bootstrap/
+   │   ├── config/
+   │   ├── vendor/
+   │   ├── .htaccess
+   │   └── .env.example
+   └── storage/
+       └── app/public/
+   ```
+5. Pastikan File Manager atau FTP ikut menampilkan file tersembunyi seperti `.htaccess`. File kode berada dalam `htdocs/erp_app` dan dilindungi aturan akses langsung.
 
-- **InfinityFree** — cocok untuk demo PHP/MySQL yang bisa diunggah via FTP; tidak ada terminal di paket gratis.
-- **Byet.host** — juga mengiklankan PHP 8.3, MySQL 8, 5 GB, SSL subdomain, dan tanpa kartu. Namun, sebelum memilihnya, verifikasi sendiri pembatasan Laravel dan akses servernya.
-- **x10Hosting** — paket gratisnya mengiklankan PHP/MySQL dan tanpa kartu, tetapi halaman resminya saat diperiksa menyatakan pendaftaran sedang ditutup karena maintenance terjadwal.
-- **alwaysdata** — paling jelas menyebut dukungan Laravel dan menyediakan SSH/Composer tanpa kartu, tetapi paket gratis hanya untuk penggunaan personal dan terbatas pada domain `alwaysdata.net`; ketentuannya melarang situs perusahaan/penggunaan komersial. Karena ERP ini berpotensi dipakai perusahaan, bukan pilihan utama untuk deployment nyata.
+## C. Siapkan konfigurasi rahasia dan database
+
+1. Di dalam `htdocs/erp_app`, salin `.env.example` menjadi `.env`. Jangan unggah file `.env` ke GitHub.
+2. Isi `APP_URL` dengan URL HTTPS hosting kamu.
+3. Buat key aplikasi di komputer yang memiliki PHP, lalu simpan hasilnya hanya ke `.env`:
+   ```powershell
+   php -r "echo 'base64:' . base64_encode(random_bytes(32)) . PHP_EOL;"
+   ```
+   Salin hasil yang diawali `base64:` ke `APP_KEY=`.
+4. Dari panel InfinityFree, buat database MySQL dan isi `DB_HOST`, `DB_DATABASE`, `DB_USERNAME`, dan `DB_PASSWORD` pada file `.env`. Host database bukan selalu `localhost`; gunakan nama host persis dari panel database.
+5. Biarkan `DB_PORT=3306`, `SESSION_DRIVER=file`, `CACHE_STORE=file`, `QUEUE_CONNECTION=sync`, dan `PUBLIC_STORAGE_ROOT=../storage/app/public`.
+6. Pastikan folder `htdocs/erp_app/storage`, semua subfoldernya, `htdocs/erp_app/bootstrap/cache`, dan `htdocs/storage/app/public` dapat ditulis PHP. Mulai dengan permission standar hosting; ubah menjadi `775` hanya pada folder terkait jika muncul masalah permission.
+
+## D. Tes situs
+
+Buka `https://subdomain-kamu/login`. Domain harus sudah aktif dan SSL tersedia. Jika error 500 muncul, periksa `htdocs/erp_app/storage/logs/laravel.log` melalui File Manager. Jangan menampilkan log atau isi `.env` secara publik.
+
+**Database belum berisi skema aplikasi.** Sampai ada persetujuan terpisah untuk metode inisialisasi skema, autentikasi dan fitur yang membutuhkan tabel belum siap digunakan. Tidak ada migrasi atau seeder yang dijalankan dalam proses paket ini.
+
+## Batasan paket gratis
+
+InfinityFree tidak menyediakan terminal untuk menjalankan Artisan, job queue latar belakang, scheduler, atau WebSocket server. Bila proyek melewati limit jumlah file/inode atau kebutuhan runtime, hosting gratis mungkin tidak cukup.
 
 ## Referensi resmi
 
-- InfinityFree: https://www.infinityfree.com/
-- InfinityFree support (SSH/terminal tidak tersedia di paket gratis): https://forum.infinityfree.com/t/can-i-ssh-into-the-host-and-run-commands-like-npm-install/59811
-- InfinityFree support (upload `vendor` dan batas file PHP): https://forum.infinityfree.com/t/about-laravel-installation/104204
-- Byet.host: https://byet.host/free-hosting
-- x10Hosting: https://www.x10hosting.com/
-- alwaysdata Laravel: https://www.alwaysdata.com/en/laravel-hosting/
-- alwaysdata free-use restrictions: https://help.alwaysdata.com/en/docs/admin-billing/profile/suspension/
+- InfinityFree free hosting: https://www.infinityfree.com/
+- Panduan resmi InfinityFree untuk Laravel: https://forum.infinityfree.com/t/how-to-install-a-laravel-site-on-infinityfree/118578
+- Konfirmasi paket gratis tidak memiliki Git integration langsung: https://forum.infinityfree.com/t/github-integration/76439
+- Batas FTP dan file yang boleh berada di dalam `htdocs`: https://forum.infinityfree.com/t/why-are-my-files-deleted-after-uploading-them/49310

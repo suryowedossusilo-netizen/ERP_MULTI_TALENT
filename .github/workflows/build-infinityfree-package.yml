@@ -23,15 +23,15 @@ jobs:
           extensions: bcmath, ctype, curl, dom, fileinfo, intl, mbstring, openssl, pdo, pdo_mysql, tokenizer, xml, zip
           coverage: none
 
-      - name: Prepare a safe shared-hosting layout
+      - name: Prepare a safe htdocs-only layout
         shell: bash
         run: |
           set -euo pipefail
           rm -rf .deploy/infinityfree
-          mkdir -p .deploy/infinityfree/erp_app
-          mkdir -p .deploy/infinityfree/htdocs/storage
+          mkdir -p .deploy/infinityfree/htdocs/erp_app
+          mkdir -p .deploy/infinityfree/htdocs/storage/app/public
 
-          rsync -a ./ .deploy/infinityfree/erp_app/ \
+          rsync -a ./ .deploy/infinityfree/htdocs/erp_app/ \
             --exclude='.git/' \
             --exclude='.github/' \
             --exclude='.deploy/' \
@@ -40,6 +40,7 @@ jobs:
             --exclude='tests/' \
             --exclude='public/' \
             --exclude='.env' \
+            --exclude='DEPLOY_INFINITYFREE.md' \
             --exclude='.phpunit.cache/' \
             --exclude='storage/logs/*.log' \
             --exclude='storage/framework/lsp-*'
@@ -49,12 +50,12 @@ jobs:
           cat > .deploy/infinityfree/htdocs/index.php <<'PHP'
           <?php
 
-          use Illuminate\Foundation\Application;
-          use Illuminate\Http\Request;
+          use Illuminate\\Foundation\\Application;
+          use Illuminate\\Http\\Request;
 
           define('LARAVEL_START', microtime(true));
 
-          $applicationPath = dirname(__DIR__) . '/erp_app';
+          $applicationPath = __DIR__ . '/erp_app';
 
           if (file_exists($maintenance = $applicationPath . '/storage/framework/maintenance.php')) {
               require $maintenance;
@@ -74,18 +75,43 @@ jobs:
 
           <IfModule mod_rewrite.c>
               RewriteEngine On
+
+              # Laravel public-disk files are stored in htdocs/storage/app/public.
+              RewriteRule ^storage/(.*)$ /storage/app/public/$1 [END]
+
+              # Prevent direct HTTP access to application code and configuration.
+              RewriteRule ^erp_app(?:/|$) - [F,L]
+
               RewriteCond %{REQUEST_FILENAME} -f [OR]
               RewriteCond %{REQUEST_FILENAME} -d
               RewriteRule ^ - [L]
+
               RewriteRule ^ index.php [L]
+          </IfModule>
+          HTACCESS
+
+          cat > .deploy/infinityfree/htdocs/erp_app/.htaccess <<'HTACCESS'
+          Options -Indexes
+          <IfModule mod_authz_core.c>
+              Require all denied
+          </IfModule>
+          <IfModule !mod_authz_core.c>
+              Order allow,deny
+              Deny from all
           </IfModule>
           HTACCESS
 
           cat > .deploy/infinityfree/htdocs/storage/.htaccess <<'HTACCESS'
           Options -Indexes
           <IfModule mod_authz_core.c>
-              <FilesMatch "\.(?i:php[0-9]?|phtml|phar)$">
+              <FilesMatch "\\.(?i:php[0-9]?|phtml|phar)$">
                   Require all denied
+              </FilesMatch>
+          </IfModule>
+          <IfModule !mod_authz_core.c>
+              <FilesMatch "\\.(?i:php[0-9]?|phtml|phar)$">
+                  Order allow,deny
+                  Deny from all
               </FilesMatch>
           </IfModule>
           HTACCESS
@@ -95,42 +121,44 @@ jobs:
           HTML
 
       - name: Install production dependencies without optimized classmaps
-        run: composer --working-dir=.deploy/infinityfree/erp_app install --no-dev --no-interaction --prefer-dist --no-progress --no-scripts
+        run: composer --working-dir=.deploy/infinityfree/htdocs/erp_app install --no-dev --no-interaction --prefer-dist --no-progress --no-scripts
 
       - name: Build Laravel package metadata
-        working-directory: .deploy/infinityfree/erp_app
+        working-directory: .deploy/infinityfree/htdocs/erp_app
         env:
           APP_ENV: production
           APP_DEBUG: 'false'
           APP_KEY: 'base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA='
-          PUBLIC_STORAGE_ROOT: '../htdocs/storage'
+          PUBLIC_STORAGE_ROOT: '../storage/app/public'
         run: php artisan package:discover --ansi
 
-      - name: Validate hosting compatibility and permissions
+      - name: Validate shared-hosting limits and writable folders
         shell: bash
         run: |
           set -euo pipefail
-          large_php="$(find .deploy/infinityfree/erp_app -type f -name '*.php' -size +950k -print)"
+          app_dir=".deploy/infinityfree/htdocs/erp_app"
+          large_php="$(find "$app_dir" -type f -name '*.php' -size +950k -print)"
           if [ -n "$large_php" ]; then
-            echo "::error::PHP files near the shared host's 1 MB upload/processing limit were found:"
-            printf '%s\n' "$large_php"
+            echo "::error::PHP files close to the host's 1 MB limit were found:"
+            printf '%s\\n' "$large_php"
             exit 1
           fi
-          mkdir -p .deploy/infinityfree/erp_app/storage/framework/cache/data
-          mkdir -p .deploy/infinityfree/erp_app/storage/framework/sessions
-          mkdir -p .deploy/infinityfree/erp_app/storage/framework/views
-          mkdir -p .deploy/infinityfree/erp_app/storage/logs
-          mkdir -p .deploy/infinityfree/erp_app/storage/app/private
-          mkdir -p .deploy/infinityfree/erp_app/storage/app/public
-          mkdir -p .deploy/infinityfree/erp_app/bootstrap/cache
-          chmod -R u+rwX,go+rX .deploy/infinityfree/erp_app/storage
-          chmod -R u+rwX,go+rX .deploy/infinityfree/erp_app/bootstrap/cache
+          mkdir -p "$app_dir/storage/framework/cache/data"
+          mkdir -p "$app_dir/storage/framework/sessions"
+          mkdir -p "$app_dir/storage/framework/views"
+          mkdir -p "$app_dir/storage/logs"
+          mkdir -p "$app_dir/storage/app/private"
+          mkdir -p "$app_dir/storage/app/public"
+          mkdir -p "$app_dir/bootstrap/cache"
+          mkdir -p .deploy/infinityfree/htdocs/storage/app/public
+          chmod -R u+rwX,go+rX "$app_dir/storage"
+          chmod -R u+rwX,go+rX "$app_dir/bootstrap/cache"
           chmod -R u+rwX,go+rX .deploy/infinityfree/htdocs/storage
 
       - name: Upload deployment bundle
         uses: actions/upload-artifact@v4
         with:
           name: erp-multi-talent-infinityfree
-          path: .deploy/infinityfree/
+          path: .deploy/infinityfree/htdocs/
           if-no-files-found: error
           retention-days: 7
