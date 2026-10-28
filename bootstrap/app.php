@@ -1,7 +1,7 @@
 <?php
-use Illuminate\\Foundation\\Application;
-use Illuminate\\Foundation\\Configuration\\Exceptions;
-use Illuminate\\Foundation\\Configuration\\Middleware;
+use Illuminate\Foundation\Application;
+use Illuminate\Foundation\Configuration\Exceptions;
+use Illuminate\Foundation\Configuration\Middleware;
 
 $app = Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -13,10 +13,10 @@ $app = Application::configure(basePath: dirname(__DIR__))
         // Trust the hosting proxy so Laravel detects HTTPS correctly behind Render's TLS edge.
         $middleware->trustProxies(at: '*');
         $middleware->alias([
-            'tenant'         => \\App\\Http\\Middleware\\IdentifyTenant::class,
-            'tenant.status'  => \\App\\Http\\Middleware\\CheckTenantStatus::class,
-            'permission'     => \\App\\Http\\Middleware\\CheckPermission::class,
-            'password.change.required' => \\App\\Http\\Middleware\\RequirePasswordChange::class,
+            'tenant'         => \App\Http\Middleware\IdentifyTenant::class,
+            'tenant.status'  => \App\Http\Middleware\CheckTenantStatus::class,
+            'permission'     => \App\Http\Middleware\CheckPermission::class,
+            'password.change.required' => \App\Http\Middleware\RequirePasswordChange::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
