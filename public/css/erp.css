@@ -482,3 +482,51 @@ body:not(.guest-body) .dashboard-order-link:hover { text-decoration:underline; }
   body:not(.guest-body) .metrics-grid { grid-template-columns:repeat(auto-fit,minmax(155px,1fr)); }
   body:not(.guest-body) .dashboard-actions { width:100%; }
 }
+
+
+/* Sidebar toggle states — integrated with the existing .layout/.sidebar structure. */
+@media (min-width: 1025px) {
+  body:not(.guest-body).sidebar-collapsed .sidebar {
+    width: 76px;
+  }
+  body:not(.guest-body).sidebar-collapsed .main {
+    margin-left: 76px;
+  }
+  body:not(.guest-body).sidebar-collapsed .sidebar-brand {
+    justify-content: center;
+    padding-inline: .75rem;
+  }
+  body:not(.guest-body).sidebar-collapsed .sidebar-brand > div:not(.logo),
+  body:not(.guest-body).sidebar-collapsed .nav-group-title,
+  body:not(.guest-body).sidebar-collapsed .sidebar-footer {
+    display: none;
+  }
+  body:not(.guest-body).sidebar-collapsed .sidebar-nav {
+    padding-inline: .55rem;
+  }
+  body:not(.guest-body).sidebar-collapsed .nav-link {
+    justify-content: center;
+    gap: 0;
+    padding: .7rem .4rem;
+    font-size: 0;
+  }
+  body:not(.guest-body).sidebar-collapsed .nav-link i {
+    width: auto;
+    font-size: 1rem;
+  }
+}
+@media (max-width: 1024px) {
+  body:not(.guest-body).sidebar-open::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 35;
+    background: rgba(0, 0, 0, .48);
+  }
+  body:not(.guest-body) .sidebar {
+    z-index: 40;
+  }
+  body:not(.guest-body).sidebar-collapsed .main {
+    margin-left: 0;
+  }
+}
