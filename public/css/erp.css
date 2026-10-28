@@ -365,3 +365,33 @@ body:not(.guest-body) .timeline-row.out td:first-child { border-left-color: var(
     animation-iteration-count: 1 !important;
   }
 }
+
+
+/* Header polish inspired by the glass dashboard reference.
+   Keep the existing .topbar/.hamburger/.user-menu hooks for current behavior. */
+body:not(.guest-body) .user-avatar {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  border-radius: 50%;
+  font-size: .82rem;
+}
+body:not(.guest-body) .user-details { min-width: 0; }
+body:not(.guest-body) .user-chip .name,
+body:not(.guest-body) .user-chip .email {
+  display: block;
+  max-width: 190px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+body:not(.guest-body) .user-menu-chevron {
+  color: var(--muted);
+  font-size: .7rem;
+}
+body:not(.guest-body) .erp-search-bar { min-width: 160px; }
+body:not(.guest-body) .erp-search-input { color: var(--text); }
+@media (max-width: 768px) {
+  body:not(.guest-body) .user-chip .email { display: none; }
+  body:not(.guest-body) .user-chip .name { max-width: 110px; }
+}
