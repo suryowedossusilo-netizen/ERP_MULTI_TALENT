@@ -530,3 +530,67 @@ body:not(.guest-body) .dashboard-order-link:hover { text-decoration:underline; }
     margin-left: 0;
   }
 }
+
+
+/* Contrast and backdrop refinement for the first glassmorphism rollout.
+   CSS-only: preserves Blade markup, routes, data bindings, and existing controls. */
+body:not(.guest-body) {
+  background: radial-gradient(ellipse at 12% 0%, rgba(0, 217, 245, .09), transparent 36%),
+              radial-gradient(ellipse at 90% 18%, rgba(99, 102, 241, .10), transparent 32%),
+              #080f1d;
+  color: #e5edf8;
+}
+body:not(.guest-body) .content { color: #e5edf8; }
+body:not(.guest-body) .page-title { color: #f3f7ff; }
+body:not(.guest-body) .page-sub { color: #9aabc2; }
+body:not(.guest-body) .dashboard-hero { gap: 1rem; }
+body:not(.guest-body) .glass-card {
+  border-color: rgba(148, 163, 184, .19);
+  background: linear-gradient(145deg, rgba(22, 34, 53, .88), rgba(10, 18, 32, .88));
+}
+body:not(.guest-body) .metric-info .title,
+body:not(.guest-body) .metric-caption { color: #9aabc2; }
+body:not(.guest-body) .metric-info .value { color: #f3f7ff; }
+body:not(.guest-body) .dashboard-section-heading h2 { color: #f3f7ff; }
+body:not(.guest-body) .glass-table th { color: #9aabc2; }
+body:not(.guest-body) .glass-table td { color: #dbe7f6; }
+body:not(.guest-body) .glass-table tbody tr:hover { background: rgba(0, 217, 245, .045); }
+body:not(.guest-body) .glass-table .empty { color: #9aabc2; }
+body:not(.guest-body) .topbar {
+  color: #e5edf8;
+  background: rgba(10, 18, 32, .86);
+  border-bottom-color: rgba(148, 163, 184, .16);
+}
+body:not(.guest-body) .topbar-title { color: #f3f7ff; }
+body:not(.guest-body) .user-chip {
+  color: #e5edf8;
+  background: rgba(22, 34, 53, .82);
+  border-color: rgba(148, 163, 184, .22);
+}
+body:not(.guest-body) .user-chip .email,
+body:not(.guest-body) .user-menu-chevron { color: #9aabc2; }
+body:not(.guest-body) .user-menu {
+  background: #111c2e;
+  border-color: rgba(148, 163, 184, .2);
+}
+body:not(.guest-body) .user-menu a,
+body:not(.guest-body) .user-menu button { color: #dbe7f6; }
+body:not(.guest-body) .user-menu a:hover,
+body:not(.guest-body) .user-menu button:hover { background: rgba(0, 217, 245, .08); }
+body:not(.guest-body) .topbar-search input,
+body:not(.guest-body) .erp-search-input {
+  color: #e5edf8;
+  background: rgba(15, 26, 43, .9);
+  border-color: rgba(148, 163, 184, .22);
+}
+body:not(.guest-body) .topbar-search input::placeholder,
+body:not(.guest-body) .erp-search-input::placeholder { color: #8294ad; }
+body:not(.guest-body) .hamburger {
+  color: #dbe7f6;
+  background: rgba(22, 34, 53, .9);
+  border-color: rgba(148, 163, 184, .22);
+}
+@media (prefers-reduced-motion: reduce) {
+  body:not(.guest-body) .metric-card { transition: none; }
+  body:not(.guest-body) .metric-card:hover { transform: none; }
+}
