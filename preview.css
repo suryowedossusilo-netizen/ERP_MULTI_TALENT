@@ -256,3 +256,23 @@ footer{border-top:1px solid #e6e7eb!important;padding:17px 0 0!important;margin-
 dialog{border:1px solid #e0e2e7!important;border-radius:13px!important;box-shadow:0 20px 70px #18223735!important}
 @media(max-width:1000px){.shell{margin:12px 12px 0!important;grid-template-columns:190px minmax(0,1fr)!important}.content{padding:22px 20px!important}.stats{grid-template-columns:repeat(2,minmax(0,1fr))!important}.middle{grid-template-columns:1fr!important}.mac-right span:nth-child(-n+3){display:none}}
 @media(max-width:700px){body{padding-top:30px!important;padding-bottom:78px!important}.mac-menubar{padding:0 10px!important}.mac-left{gap:10px!important}.mac-left span:not(.apple-mark){display:none}.mac-right{gap:8px!important;font-size:10px!important}.shell{display:block!important;margin:7px!important;min-height:calc(100vh - 120px)!important;border-radius:10px!important}.sidebar{display:none!important}.main{width:100%!important}.topbar{height:51px!important;padding:0 12px!important}.window-controls{gap:5px!important}.window-controls i{width:10px;height:10px}.content{padding:18px 12px!important}.heading{margin-bottom:17px!important}.heading h1{font-size:23px!important}.stats{gap:9px!important}.stat{padding:13px!important;min-height:105px!important}.stat>strong{font-size:23px!important;margin:11px 0 5px!important}.panel{padding:13px!important;overflow-x:auto!important}.employees{padding:0!important}.employees>.panel-head{padding:13px!important}.mac-dock{bottom:8px!important;gap:6px!important;padding:7px 9px!important}.dock-app{width:36px!important;height:36px!important;font-size:18px!important}}
+
+
+/* Softer corners and gentler surfaces */
+.shell{border-radius:18px!important;border-color:#dfe2e8!important;box-shadow:0 20px 60px #202a3c14,0 2px 8px #202a3c06!important}
+.sidebar{border-radius:18px 0 0 18px!important}
+.brand .logo{border-radius:12px!important}
+.sidebar a,.sidebar button,.nav-item{border-radius:9px!important}
+.sidebar a.active,.sidebar a[aria-current="page"],.sidebar .active{border-radius:9px!important}
+.topbar{border-radius:0 18px 0 0!important}
+.stat,.panel,.chart-card,.employees,.card{border-radius:15px!important;border-color:#e7e9ee!important;box-shadow:0 2px 8px #18223704,0 1px 2px #18223703!important}
+.stat{padding:19px 20px!important}
+.btn,.button,.btn.primary,button{border-radius:10px!important}
+input,select,textarea,.search,.search-box{border-radius:10px!important}
+.status{border-radius:7px!important}
+.mac-dock{border-radius:21px!important;padding:10px 13px!important;box-shadow:0 10px 34px #1822371c,0 2px 6px #18223708!important}
+.dock-app{border-radius:13px!important}
+dialog{border-radius:18px!important}
+.panel-head{margin-bottom:18px!important}
+tbody tr:hover{background:#f9fafc!important}
+@media(max-width:700px){.shell{border-radius:14px!important}.sidebar{border-radius:14px!important}.topbar{border-radius:14px 14px 0 0!important}.stat,.panel,.chart-card,.employees,.card{border-radius:13px!important}.mac-dock{border-radius:18px!important}}
