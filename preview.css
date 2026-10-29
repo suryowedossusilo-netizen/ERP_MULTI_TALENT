@@ -144,3 +144,57 @@ td{padding:10px 16px}
 footer{padding-top:15px}
 @media(max-width:1050px){.sidebar{width:220px}.main{margin-left:220px}.content{padding:20px}.middle{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:760px){.sidebar{width:250px}.main{margin-left:0}.topbar{height:60px;padding:0 14px}.content{padding:16px 13px}.heading h1{font-size:24px}.stats{gap:9px}.stat{min-height:115px;padding:12px}.stat>strong{font-size:22px;margin:12px 0 7px}.stat-label{font-size:11px}.middle{gap:12px}.chart{height:160px}.y-axis{height:140px}.user>span:not(.avatar){display:none}}
+
+
+/* macOS-inspired desktop presentation */
+:root{color-scheme:light;--bg:#dce5ef;--line:#e2e7ee;--text:#202633;--muted:#687385}
+html{min-height:100%;background:#dce5ef}
+body{min-height:100vh;background:radial-gradient(ellipse at 18% 12%,#f8fbff 0,#e7eef7 38%,#d3deec 100%);color:#202633;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif;padding-top:30px;padding-bottom:74px}
+.mac-menubar{height:30px;position:fixed;z-index:100;inset:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:#f8fafce8;backdrop-filter:blur(24px);border-bottom:1px solid #aab6c61c;color:#283244;font-size:12px}
+.mac-left,.mac-right{display:flex;align-items:center;gap:18px}.mac-left b{font-weight:650}.mac-left span:not(.mac-mark){color:#4d596a}.mac-mark{font-size:10px;color:#111827}.mac-right{gap:13px;color:#4c5869;font-size:11px}
+.glow{display:none}
+.shell{min-height:calc(100vh - 110px);margin:12px 22px 0;background:#f8fafc;border:1px solid #ffffffb8;border-radius:15px;overflow:hidden;box-shadow:0 22px 70px #34465d25,0 2px 6px #34465d0b}
+.sidebar{position:fixed;inset:42px auto 87px 32px;width:222px;padding:17px 12px 12px;background:#eef2f8eF;backdrop-filter:blur(30px);border:1px solid #ffffffb5;border-right:1px solid #d7dee8;border-radius:13px;box-shadow:0 8px 24px #3d4e6310;z-index:20}
+.brand{padding:2px 8px 18px}.logo{width:32px;height:32px;border-radius:9px;background:#3478df;color:#fff;box-shadow:0 2px 4px #2458a326}.logo span{color:#fff}
+.brand b{font-size:13px;letter-spacing:-.2px}.brand small{font-size:9px;letter-spacing:.7px;color:#778295}
+.workspace{background:#ffffff9c;border-color:#dfe5ee;border-radius:9px;margin-bottom:20px}.workspace-mark{background:#e1ebfb;color:#2769c4}
+.nav-caption{font-size:9px;color:#8791a0;letter-spacing:.7px;padding-left:10px}.sidebar nav{gap:3px;margin-bottom:19px}
+.nav{padding:9px 10px;border-radius:7px;font-size:12px;color:#596476}.nav.active{background:#dce9fb;border-color:transparent;color:#1f5ca9;box-shadow:none}.nav.active::first-letter{color:#1f5ca9}.nav i{background:#e1e7ef;color:#637087}
+.help{background:#ffffffa3;border-color:#dfe5ee;border-radius:9px}.profile{border-top-color:#dce2eb}
+.main{margin-left:246px;min-width:0;padding-top:0}
+.topbar{position:sticky;top:30px;height:54px;padding:0 25px;background:#f9fbfdf2;backdrop-filter:blur(22px);border-bottom:1px solid #e1e6ed;z-index:10}
+.crumb{font-size:12px;color:#7b8493}.crumb b{color:#293446}
+.search{width:205px;background:#edf1f6;border:1px solid #e0e5ec;border-radius:7px;padding:7px 9px}.search input{font-size:11px}.search kbd{display:none}
+.icon{background:#f6f8fb;border:1px solid #e2e7ee;border-radius:7px}.user{font-size:12px}
+.content{padding:25px 25px 19px;max-width:1600px}
+.notice{background:#edf4fd;border-color:#d9e5f6;border-radius:8px}
+.heading{margin-bottom:20px}.heading h1{font-family:inherit;font-size:28px;font-weight:650;letter-spacing:-.7px}
+.heading p:not(.eyebrow),.panel-head p{font-size:12px;color:#758093}
+.btn{border-radius:7px;font-size:11px}.primary{background:#2876df;border-color:#2876df;color:#fff}.primary:hover{background:#1d64c4}
+.stats{gap:12px;margin-bottom:14px}
+.stat,.panel{background:#fff;border:1px solid #e4e8ef;border-radius:11px;box-shadow:0 2px 5px #26374a07;backdrop-filter:none}
+.stat{min-height:130px;padding:15px 16px}.stat:after{display:none}.stat-label{font-size:11px;color:#697486}
+.symbol{width:28px;height:28px;border-radius:8px}.symbol.c,.symbol.v,.symbol.b,.symbol.a{background:#edf3fc;color:#3475c9}
+.stat>strong{font-family:inherit;font-size:26px;font-weight:650;letter-spacing:-.5px;margin:14px 0 8px;color:#222d3c}
+.stat-foot{font-size:10px;color:#7b8594}.stat-foot em{background:#eaf6ef;color:#23845b}
+.spark{opacity:.35}.spark i,.gold i{background:#7b9fd0}
+.progress{background:#e9edf3}.progress i{background:#4b88dc}.segments i,.segments i:nth-child(3n+1),.segments i:nth-child(3n+2){background:#82a7db}
+.middle{grid-template-columns:minmax(0,1.6fr) minmax(245px,.8fr);gap:14px;margin-bottom:14px}
+.panel{padding:17px}.panel-head h2{font-family:inherit;font-size:14px;font-weight:650;color:#273244}
+.panel-head select{background:#f8fafc;color:#596577;border-color:#e1e6ed}
+.legend{color:#697587}.dot{box-shadow:none}.cyan-dot,.violet-dot{background:#4a86d5}.amber-dot{background:#d2a04e}.gray-dot{background:#b3bdcb}
+.chart .grid i{border-top:1px solid #edf0f4}.chart svg path[fill^="url"]{fill:#e0ebfb}.chart svg path[stroke="#31d9ef"]{stroke:#4a86d5}.chart svg path[stroke="#9584ff"]{stroke:#a9b9d1}
+.y-axis,.months{color:#8a94a2}.donut{background:conic-gradient(#4a86d5 0 79%,#8ba8d1 79% 82%,#d2a04e 82% 91%,#e7ebf1 91%);box-shadow:none}.donut:before{background:#fff;border:0}.donut strong{font-family:inherit;font-size:22px;color:#263245}.donut small{color:#7c8796}
+.att-legend>div{color:#697587}.att-legend b{font-family:inherit;color:#344154}
+.link{color:#2469c2}.link:hover{color:#154e9a}
+.employees>.panel-head{padding:16px 18px}thead{background:#f7f9fc}th{color:#8791a0;letter-spacing:.4px;border-color:#e7ebf1}td{color:#566174;border-color:#edf0f4}tbody tr:hover{background:#f7f9fc}
+.person b{color:#293446}.person small{color:#8b95a2}.p1,.p2,.p3,.p4{background:#edf3fc;color:#286bc2}
+.status.active{background:#e9f6ee;color:#27774e}.status.leave{background:#fff4df;color:#956715}
+.table-foot{border-top:1px solid #e7ebf1;color:#7d8795}
+footer{color:#8a94a2}footer b{color:#566174}.online{background:#329667;box-shadow:none}
+dialog{border:1px solid #e0e6ee;border-radius:13px;box-shadow:0 24px 70px #25364c30;background:#fff;color:#263244}dialog h2{font-family:inherit;color:#202b3c}
+.mac-dock{position:fixed;z-index:90;bottom:11px;left:50%;transform:translateX(-50%);display:flex;align-items:flex-end;gap:8px;padding:8px 12px;background:#f7f9fbd9;border:1px solid #ffffffd9;border-radius:17px;backdrop-filter:blur(28px);box-shadow:0 8px 28px #34465d28}
+.dock-app{width:42px;height:42px;display:grid;place-items:center;border-radius:11px;color:#fff;font-size:23px;box-shadow:0 2px 5px #1e293b1c;transition:transform .15s;cursor:pointer}.dock-app:hover{transform:translateY(-5px) scale(1.06)}
+.dock-finder{background:linear-gradient(135deg,#69c4f2 0 49%,#2388d6 50%)}.dock-erp{background:#2876df;font-size:20px;font-weight:750}.dock-erp span{font-size:10px;color:#d9eaff}.dock-people{background:linear-gradient(140deg,#efb67b,#dc7e5d)}.dock-chart{background:linear-gradient(140deg,#79cda2,#269765)}.dock-settings{background:linear-gradient(140deg,#aeb9c9,#65748b)}.dock-trash{background:#e7edf5;color:#64748b;font-size:21px}.dock-divider{width:1px;height:33px;background:#cbd3df;margin:0 2px 3px}
+@media(max-width:1050px){.sidebar{width:200px;left:27px}.main{margin-left:222px}.content{padding:20px}.middle{grid-template-columns:1fr}}
+@media(max-width:760px){body{padding-top:30px;padding-bottom:72px}.mac-menubar{padding:0 10px}.mac-left{gap:10px}.mac-left span:not(.mac-mark){display:none}.mac-right{gap:8px}.shell{margin:8px 7px 0;border-radius:12px}.sidebar{inset:38px auto 82px 13px;width:235px}.main{margin-left:0}.topbar{top:30px;height:53px;padding:0 12px}.content{padding:17px 12px}.heading h1{font-size:24px}.stats{gap:9px}.stat{min-height:112px;padding:12px}.stat>strong{font-size:22px;margin:10px 0 6px}.stat-label{font-size:10px}.middle{gap:10px}.panel{padding:13px}.employees{padding:0}.employees>.panel-head{padding:14px}.mac-dock{bottom:8px;gap:6px;padding:7px 9px;border-radius:15px}.dock-app{width:36px;height:36px;border-radius:10px;font-size:20px}.dock-divider{height:28px}}
