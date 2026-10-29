@@ -356,3 +356,65 @@ tbody tr:hover{background:#f7f9fc!important}
 footer{border-top-color:#e9eaee!important}
 @media(max-width:1000px){.shell{grid-template-columns:195px minmax(0,1fr)!important}.content{padding:22px 20px!important}.topbar{grid-template-columns:45px minmax(0,1fr) auto!important}.search{min-width:120px!important}}
 @media(max-width:700px){.topbar{grid-template-columns:36px minmax(0,1fr) auto!important;padding:0 10px!important}.crumb{font-size:10px!important}.actions{gap:3px!important}.search{min-width:0!important;width:34px!important;padding:0 7px!important}.search input{width:0!important}.search kbd,.user>span:not(.avatar){display:none!important}.content{padding:18px 12px!important}.heading h1{font-size:24px!important}.heading{align-items:flex-start!important}.notice{margin-bottom:19px!important}}
+
+
+/* Natural, less-boxy macOS dashboard pass */
+body{background:#e8eaf0!important}
+.shell{max-width:1460px!important;margin-top:12px!important;min-height:calc(100vh - 142px)!important;background:#fbfbfc!important;border:1px solid #d9dce3!important;border-radius:14px!important;overflow:hidden!important;box-shadow:0 22px 65px #202a3c12!important}
+.sidebar{background:#f6f6f8!important;border-right:1px solid #e9e9ed!important;padding:19px 12px 14px!important}
+.brand{border-bottom:0!important;margin-bottom:12px!important;padding-bottom:12px!important}
+.workspace{background:#ededf1!important;border-color:transparent!important;border-radius:9px!important}
+.sidebar .nav{border-radius:7px!important;padding:8px 10px!important}
+.sidebar .nav.active{background:#e3edfb!important;box-shadow:none!important;color:#2369bc!important}
+.side-bottom .help{border-radius:8px!important}
+.main{background:#fbfbfc!important}
+.topbar{background:#fbfbfc!important;border-bottom:1px solid #efeff2!important}
+.content{padding:27px 31px 24px!important}
+.notice{border:0!important;background:#f2f4f7!important;border-radius:7px!important;margin-bottom:25px!important}
+.heading{margin-bottom:25px!important}
+.heading h1{font-size:30px!important;letter-spacing:-.065em!important;font-weight:620!important}
+.heading h1 span{color:#9a9da5!important;font-weight:400!important}
+.heading p:not(.eyebrow){max-width:560px!important}
+.stats{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:0!important;background:transparent!important;border:0!important;margin-bottom:27px!important}
+.stat{min-height:116px!important;padding:8px 19px 8px 0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;overflow:visible!important}
+.stat+.stat{padding-left:19px!important;border-left:1px solid #e8e9ed!important}
+.stat-label{font-size:11px!important;color:#858992!important}
+.stat>strong{font-size:29px!important;font-weight:620!important;letter-spacing:-.065em!important;margin:12px 0 6px!important}
+.stat-foot{font-size:10px!important;color:#8c9098!important}
+.stat .symbol{width:24px!important;height:24px!important;border-radius:7px!important;background:#f0f2f5!important;color:#6c7788!important}
+.spark{opacity:.23!important}
+.progress{margin-top:15px!important}
+.segments{margin-top:13px!important}
+.middle{grid-template-columns:minmax(0,1.6fr) minmax(245px,.9fr)!important;gap:14px!important;margin-bottom:16px!important}
+.panel{border:1px solid #ececf0!important;border-radius:12px!important;background:#fff!important;box-shadow:0 2px 8px #202a3c04!important;padding:20px!important}
+.panel-head{margin-bottom:18px!important}
+.panel-head h2{font-size:13px!important;font-weight:630!important;letter-spacing:-.025em!important}
+.panel-head p{margin-top:4px!important;color:#92959d!important}
+.panel-head select{border-radius:7px!important;background:#f7f8fa!important;border-color:#ededf0!important}
+.chart-area{margin-top:9px!important}
+.chart .grid i{border-top:1px solid #f0f1f4!important}
+.chart svg path[stroke="#7199d0"]{stroke:#7e9fd0!important;stroke-width:2.5!important}
+.chart svg path[stroke="#b4bac5"]{stroke:#c1c6ce!important;stroke-width:2!important;stroke-dasharray:4 5!important}
+.legend{gap:15px!important;color:#888c95!important}
+.employees{border:1px solid #ececf0!important;border-radius:12px!important;box-shadow:0 2px 8px #202a3c04!important}
+.employees>.panel-head{padding:19px 20px!important}
+.employees .table-wrap{border-top:1px solid #f0f1f3!important}
+thead th{background:#fafbfc!important;border-bottom:1px solid #eff0f3!important}
+tbody td{border-bottom:1px solid #f2f3f5!important}
+.table-foot{border-top:1px solid #f0f1f3!important}
+.btn,.button,.btn.primary,.btn.quiet{min-height:33px!important;padding:0 12px!important;border-radius:8px!important;font-size:11px!important}
+.btn.primary{background:#3478d4!important;border-color:#3478d4!important;box-shadow:none!important}
+.btn.quiet{background:transparent!important;border-color:#e8e9ed!important}
+.search{background:#f2f3f6!important;border-color:transparent!important;border-radius:8px!important}
+.icon:hover,.user:hover{background:#f0f1f4!important}
+.mac-dock{bottom:11px!important;background:#f6f6f7d9!important;border-color:#ffffffd9!important;border-radius:19px!important;padding:8px 10px!important;gap:7px!important;box-shadow:0 8px 28px #1b243514!important}
+.dock-app{width:41px!important;height:41px!important;border-radius:12px!important;box-shadow:none!important}
+.dock-finder{background:linear-gradient(135deg,#77c8f2 0 49%,#378cda 50%)!important}
+.dock-erp{background:#3478d4!important}
+.dock-people{background:#e6a779!important}
+.dock-chart{background:#57b98a!important}
+.dock-settings{background:#aab3c2!important}
+.dock-trash{background:#e8ebf0!important}
+footer{border-top:0!important;padding-top:9px!important}
+@media(max-width:1000px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))!important;row-gap:15px!important}.stat:nth-child(3){border-left:0!important;padding-left:0!important}.stat:nth-child(2){padding-left:16px!important}.middle{grid-template-columns:1fr!important}}
+@media(max-width:700px){.content{padding:18px 13px!important}.stats{row-gap:12px!important;margin-bottom:18px!important}.stat{padding:6px 9px 6px 0!important;min-height:102px!important}.stat+.stat{padding-left:10px!important}.stat:nth-child(2){padding-left:10px!important}.stat:nth-child(3){padding-left:0!important}.stat>strong{font-size:24px!important}.middle{gap:10px!important}.panel{padding:14px!important}.employees>.panel-head{padding:14px!important}.heading h1{font-size:25px!important}}
